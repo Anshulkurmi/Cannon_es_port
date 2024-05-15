@@ -75,7 +75,7 @@ public class Material {
      */
     public Material(String name, double friction, double restitution) {
         this.name = name;
-        this.id = idCounter++;
+        this.id = Material.idCounter++;
         // Ensure that friction and restitution are non-negative or set them to -1 otherwise.
         this.friction = friction >= 0 ? friction : -1;
         this.restitution = restitution >= 0 ? restitution : -1;

@@ -95,7 +95,7 @@ public class Heightfield extends Shape {
         this.cacheEnabled = true;
         this.pillarConvex = new ConvexPolyhedron();
         this.pillarOffset = new Vec3();
-        updateBoundingSphereRadius();
+        this.updateBoundingSphereRadius();
         this._cachedPillars = new HashMap<>();
     }
 
@@ -107,6 +107,7 @@ public class Heightfield extends Shape {
      * Automatically find minimum height from the data
      */
     public void updateMinValue() {
+    	double[][] data= this.data ;
         double minValue = data[0][0];
         for (int i = 0; i < data.length; i++) {
             for (int j = 0; j < data[i].length; j++) {
@@ -122,6 +123,7 @@ public class Heightfield extends Shape {
      * Automatically find maximum height from the data
      */
     public void updateMaxValue() {
+    	double[][] data= this.data ;
         double maxValue = data[0][0];
         for (int i = 0; i < data.length; i++) {
             for (int j = 0; j < data[i].length; j++) {
@@ -326,7 +328,7 @@ public class Heightfield extends Shape {
 
         double elementSize = this.elementSize;
         // changed List<face> to List<int[]>
-        List<int[]> faces = result.faces;
+        List<Face> faces = result.faces;
 
         // Reuse verts if possible
         while (result.vertices.size() < 6) {
@@ -336,7 +338,7 @@ public class Heightfield extends Shape {
         // Reuse faces if possible
         while (faces.size() < 5) {
             //added : length of face array = 4
-            faces.add(new int[4]);
+            faces.add(new Face(new int[4]));
         }
 
         List<Vec3> verts = result.vertices;
@@ -357,7 +359,7 @@ public class Heightfield extends Shape {
             verts.get(5).set(-0.25 * elementSize, 0.75 * elementSize, -Math.abs(h) - 1);
 
             //faces.get(0).length = 0 ;//();
-            faces.set(0,new int[]{0,1,2});
+            faces.set(0,new Face(new int[]{0,1,2}));
             // faces.get(0).add(0);
             // faces.get(0).add(1);
             // faces.get(0).add(2);
@@ -366,28 +368,28 @@ public class Heightfield extends Shape {
             // faces.get(1).add(5);
             // faces.get(1).add(4);
             // faces.get(1).add(3);
-            faces.set(1,new int[]{5,4,3});
+            faces.set(1,new Face(new int[]{5,4,3}));
 
             // faces.get(2).clear();
             // faces.get(2).add(0);
             // faces.get(2).add(2);
             // faces.get(2).add(5);
             // faces.get(2).add(3);
-            faces.set(2,new int[]{0,2,5,3});
+            faces.set(2,new Face(new int[]{0,2,5,3}));
 
             // faces.get(3).clear();
             // faces.get(3).add(1);
             // faces.get(3).add(0);
             // faces.get(3).add(3);
             // faces.get(3).add(4);
-            faces.set(3, new int[]{1,0,3,4});
+            faces.set(3, new Face(new int[]{1,0,3,4}));
 
             // faces.get(4).clear();
             // faces.get(4).add(4);
             // faces.get(4).add(5);
             // faces.get(4).add(2);
             // faces.get(4).add(1);
-            faces.set(4,new int[]{4,5,2,1});
+            faces.set(4,new Face(new int[]{4,5,2,1}));
         } else {
             offsetResult.set((xi + 0.75) * elementSize, (yi + 0.75) * elementSize, h);
 
@@ -402,34 +404,34 @@ public class Heightfield extends Shape {
             // faces.get(0).add(0);
             // faces.get(0).add(1);
             // faces.get(0).add(2);
-            faces.set(0,new int[]{0,1,2});
+            faces.set(0,new Face(new int[]{0,1,2}));
 
             // faces.get(1).clear();
             // faces.get(1).add(5);
             // faces.get(1).add(4);
             // faces.get(1).add(3);
-            faces.set(1,new int[]{5,4,3});
+            faces.set(1,new Face(new int[]{5,4,3}));
 
             // faces.get(2).clear();
             // faces.get(2).add(2);
             // faces.get(2).add(5);
             // faces.get(2).add(3);
             // faces.get(2).add(0);
-            faces.set(2,new int[]{2,5,3,0});
+            faces.set(2,new Face(new int[]{2,5,3,0}));
 
             // faces.get(3).clear();
             // faces.get(3).add(3);
             // faces.get(3).add(4);
             // faces.get(3).add(1);
             // faces.get(3).add(0);
-            faces.set(3,new int[]{3,4,1,0});
+            faces.set(3,new Face(new int[]{3,4,1,0}));
 
             // faces.get(4).clear();
             // faces.get(4).add(1);
             // faces.get(4).add(4);
             // faces.get(4).add(5);
             // faces.get(4).add(2);
-            faces.set(4,new int[]{1,4,5,2});
+            faces.set(4,new Face(new int[]{1,4,5,2}));
         }
 
         result.computeNormals();

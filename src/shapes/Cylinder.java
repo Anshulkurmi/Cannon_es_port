@@ -8,12 +8,12 @@ import shapes.ShapeTypes;
 /**
  * Cylinder class.
  * @example
- *     const radiusTop = 0.5
- *     const radiusBottom = 0.5
- *     const height = 2
- *     const numSegments = 12
- *     const cylinderShape = new CANNON.Cylinder(radiusTop, radiusBottom, height, numSegments)
- *     const cylinderBody = new CANNON.Body({ mass: 1, shape: cylinderShape })
+ *     double radiusTop = 0.5
+ *     double radiusBottom = 0.5
+ *     double height = 2
+ *     int numSegments = 12
+ *     Shape cylinderShape = new CANNON.Cylinder(radiusTop, radiusBottom, height, numSegments)
+ *     Body cylinderBody = new CANNON.Body({ mass: 1, shape: cylinderShape })
  *     world.addBody(cylinderBody)
  */
 public class Cylinder extends ConvexPolyhedron {
@@ -41,6 +41,8 @@ public class Cylinder extends ConvexPolyhedron {
     public Cylinder(double radiusTop, double radiusBottom, double height, int numSegments) {
     	
     	super();
+    	
+    	
         if (radiusTop < 0) {
             throw new IllegalArgumentException("The cylinder radiusTop cannot be negative.");
         }
@@ -52,7 +54,7 @@ public class Cylinder extends ConvexPolyhedron {
         int N = numSegments;
         List<Vec3> vertices = new ArrayList<>();
         List<Vec3> axes = new ArrayList<>();
-        List<int[]> faces = new ArrayList<>();
+        List<Face> faces = new ArrayList<>();
         // List<Integer> bottomFace = new ArrayList<>();
         // List<Integer> topFace = new ArrayList<>();
         
@@ -83,9 +85,9 @@ public class Cylinder extends ConvexPolyhedron {
             // Faces
             if (i < N - 1) {
                 // Face
-                faces.add(new int[]{2 * i, 2 * i + 1, 2 * i + 3, 2 * i + 2});
+                faces.add(new Face(new int[]{2 * i, 2 * i + 1, 2 * i + 3, 2 * i + 2}));
             } else {
-                faces.add(new int[]{2 * i, 2 * i + 1, 1, 0}); // Connect
+                faces.add(new Face(new int[]{2 * i, 2 * i + 1, 1, 0})); // Connect
             }
         }
         
@@ -97,11 +99,17 @@ public class Cylinder extends ConvexPolyhedron {
         // vertices.add(new Vec3(-radiusTop * Math.sin(0), halfHeight, radiusTop * Math.cos(0)));
         // topFace.add(2 * N + 1);
 
-        faces.add(new int[]{2 * N, 2 * N + 1, 2 * N + 3, 2 * N + 2}); // Top face
-        faces.add(bottomFace); // Bottom face
+        faces.add(new Face(new int[]{2 * N, 2 * N + 1, 2 * N + 3, 2 * N + 2})); // Top face
+        faces.add(new Face(bottomFace)); // Bottom face
         axes.add(new Vec3(0, 1, 0));
         
-        super(vertices, faces, axes);
+        this.vertices = vertices;
+        this.faces = faces;
+        computeNormals();
+        updateBoundingSphereRadius();
+        if (this.faceNormals.isEmpty()) {
+            computeNormals();
+        }
 
         this.type = ShapeTypes.CYLINDER;
         this.radiusTop = radiusTop;
@@ -109,4 +117,16 @@ public class Cylinder extends ConvexPolyhedron {
         this.height = height;
         this.numSegments = numSegments;
     }
+	public double getRadiusTop() {
+		return radiusTop;
+	}
+	public double getRadiusBottom() {
+		return radiusBottom;
+	}
+	public double getHeight() {
+		return height;
+	}
+	public int getNumSegments() {
+		return numSegments;
+	}
 }

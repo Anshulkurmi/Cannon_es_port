@@ -117,8 +117,8 @@ public class Broadphase {
 
         //added this 
         for(int i = 0; i < N; i++) {
-            p1.set(i,pairs1.get(i));
-            p2.set(i,pairs1.get(i));     
+            p1.add(pairs1.get(i));
+            p2.add(pairs1.get(i));     
         }
 
         pairs1.clear();

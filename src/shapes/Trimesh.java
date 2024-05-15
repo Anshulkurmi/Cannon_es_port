@@ -4,7 +4,10 @@ import math.Vec3;
 import math.Transform;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Consumer;
 
 import collision.AABB;
 import utils.Octree;
@@ -66,11 +69,11 @@ public class Trimesh extends Shape {
         this.scale = new Vec3(1, 1, 1);
         this.tree = new Octree();
 
-        updateEdges();
-        updateNormals();
-        updateAABB();
-        updateBoundingSphereRadius();
-        updateTree();
+        this.updateEdges();
+        this.updateNormals();
+        this.updateAABB();
+        this.updateBoundingSphereRadius();
+        this.updateTree();
     }
 
     // Method to update the Octree structure
@@ -80,7 +83,7 @@ public class Trimesh extends Shape {
         tree.reset();
         // changed getAABB() to aabb
         tree.aabb.copy(this.aabb);
-        Vec3 scale = this.scale;
+        Vec3 scale = this.scale;// The local mesh AABB is scaled, but the octree AABB should be unscaled
         tree.aabb.getLowerBound().x *= 1 / scale.x;
         tree.aabb.getLowerBound().y *= 1 / scale.y;
         tree.aabb.getLowerBound().z *= 1 / scale.z;
@@ -134,17 +137,17 @@ public class Trimesh extends Shape {
         upperBound.y /= scale.y;
         upperBound.z /= scale.z;
 
-        return tree.aabbQuery(unscaledAABB, result);
+        return this.tree.aabbQuery(unscaledAABB, result);
     }
 
     // Method to set the scaling factor
     public void setScale(Vec3 scale) {
         if (this.scale.x != this.scale.y || this.scale.y != this.scale.z) {
-            updateNormals();
+            this.updateNormals();
         }
         this.scale.copy(scale);
-        updateAABB();
-        updateBoundingSphereRadius();
+        this.updateAABB();
+        this.updateBoundingSphereRadius();
     }
 
     // Method to calculate local inertia
@@ -270,21 +273,21 @@ public class Trimesh extends Shape {
      * Update the `.edges` property
      */
     public void updateEdges() {
-        java.util.HashMap<String, Boolean> edges = new java.util.HashMap<>();
-        java.util.function.Consumer<Integer> add = (a, b) -> {
-            String key = a < b ? a + "_" + b : b + "_" + a;
-            edges.put(key, true);
-        };
+        HashMap<String, Boolean> edges = new HashMap<>();
+//        Consumer<Integer> add = (a,b) -> {
+//            String key = a < b ? a + "_" + b : b + "_" + a;
+//            edges.put(key, true);
+//        };
         for (int i = 0; i < this.indices.length / 3; i++) {
             int i3 = i * 3;
             int a = this.indices[i3];
             int b = this.indices[i3 + 1];
             int c = this.indices[i3 + 2];
-            add.accept(a, b);
-            add.accept(b, c);
-            add.accept(c, a);
+            add(a, b , edges);
+            add(b, c , edges);
+            add(c, a , edges);
         }
-        java.util.Set<String> keys = edges.keySet();
+        Set<String> keys = edges.keySet();
         this.edges = new int[keys.size() * 2];
         int edgeIndex = 0;
         for (String key : keys) {
@@ -292,6 +295,11 @@ public class Trimesh extends Shape {
             this.edges[edgeIndex++] = Short.parseShort(indices[0]);
             this.edges[edgeIndex++] = Short.parseShort(indices[1]);
         }
+    }
+    
+    public void add(int a , int b , HashMap<String ,Boolean> edges ) {
+    	String key = a < b ? a + "_" + b : b + "_" + a;
+        edges.put(key, true);      
     }
 
     /**

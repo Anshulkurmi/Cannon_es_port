@@ -49,11 +49,16 @@ public class SPHSystem {
         this.speedOfSound = 1.0;
         this.viscosity = 0.01;
         this.eps = 0.000001;
+        
+     // Stuff Computed per particle
         this.pressures = new ArrayList<>();
         this.densities = new ArrayList<>();
         this.neighbors = new ArrayList<>();
     }
 
+    /**
+     * Add a particle to the system.
+     */
     public void add(Body particle) {
         // Add a particle to the system
         particles.add(particle);
@@ -64,24 +69,27 @@ public class SPHSystem {
 
     public void remove(Body particle) {
         // Remove a particle from the system
-        int idx = particles.indexOf(particle);
+        int idx = this.particles.indexOf(particle);
         if (idx != -1) {
-            particles.remove(idx);
-            if (neighbors.size() > particles.size()) {
-                neighbors.remove(neighbors.size() - 1);
+            this.particles.remove(idx);
+            if (this.neighbors.size() > this.particles.size()) {
+                this.neighbors.remove(neighbors.size() - 1);
             }
         }
     }
 
+    
+    /**
+     * Get neighbors within smoothing volume, save in the array neighbors
+     */
     public void getNeighbors(Body particle, List<Body> neighborsList) {
-        // Get neighbors within smoothing volume, save in the array neighborsList
-        int N = particles.size();
+        int N = this.particles.size();
         int id = particle.id;
-        double R2 = smoothingRadius * smoothingRadius;
+        double R2 = this.smoothingRadius * this.smoothingRadius;
         Vec3 dist = SPHSystem_getNeighbors_dist;
 
         for (int i = 0; i < N; i++) {
-            Body p = particles.get(i);
+            Body p = this.particles.get(i);
             p.position.vsub(particle.position, dist);
             if (id != p.id && dist.lengthSquared() < R2) {
                 neighborsList.add(p);
@@ -91,36 +99,36 @@ public class SPHSystem {
 
     public void update() {
         // Update the SPH system for one time step
-        int N = particles.size();
+        int N = this.particles.size();
         Vec3 dist = SPHSystem_update_dist;
         double cs = speedOfSound;
         double eps = this.eps;
 
         for (int i = 0; i < N; i++) {
-            Body p = particles.get(i);
+            Body p = this.particles.get(i);//current particle
             List<Body> neighborsList = neighbors.get(i);
 
             // Clear the list of neighbors
             neighborsList.clear();
-            getNeighbors(p, neighborsList);
-            neighborsList.add(particles.get(i)); // Add the current particle to its own neighbors
+            this.getNeighbors(p, neighborsList);
+            neighborsList.add(this.particles.get(i)); // Add the current particle to its own neighbors
             int numNeighbors = neighborsList.size();
             double sum = 0.0;
 
             // Accumulate density for the particle
             for (int j = 0; j < numNeighbors; j++) {
                 Body neighbor = neighborsList.get(j);
-                //printf("Current particle has position %f %f %f\n",objects[id].pos.x(),objects[id].pos.y(),objects[id].pos.z());
+                //System.out.println("Current particle has position %f %f %f\n",objects[id].pos.x(),objects[id].pos.y(),objects[id].pos.z());
                 p.position.vsub(neighbor.position, dist);
                 double len = dist.length();
 
-                double weight = w(len);
+                double weight = this.w(len);
                 sum += neighbor.mass * weight;
             }
 
             // Save density and pressure
-            densities.set(i, sum);
-            pressures.set(i, cs * cs * (densities.get(i) - density));
+            this.densities.add( sum);
+            this.pressures.add( cs * cs * (this.densities.get(i) - this.density));
         }
 
         // Calculate forces and update particle positions

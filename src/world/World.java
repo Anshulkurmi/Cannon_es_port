@@ -5,17 +5,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.w3c.dom.events.Event;
 
 import objects.Body;
 import shapes.Shape;
 import solver.GSSolver;
 import solver.Solver;
-import utils.EventTarget;
 import utils.TupleDictionary;
 import equations.ContactEquation;
 import equations.Equation;
 import equations.FrictionEquation;
+import events.AddBodyEvent;
+import events.CollideEvent;
+import events.ContactEvent;
+import events.Event;
+import events.EventTarget;
+import events.RemoveBodyEvent;
+import events.ShapeContactEvent;
 import material.ContactMaterial;
 import material.ContactMaterialOptions;
 import material.Material;
@@ -39,7 +44,7 @@ public class World extends EventTarget {
     /**
    * Currently / last used timestep. Is set to -1 if not available. This value is updated before each internal step, which means that it is "fresh" inside event callbacks.
    */
-    double dt;
+    public double dt;
     /**
    * Makes bodies go to sleep when they've been inactive.
    * @default false
@@ -88,7 +93,7 @@ public class World extends EventTarget {
    * The broadphase algorithm to use.
    * @default NaiveBroadphase
    */
-    private Broadphase broadphase;
+    public Broadphase broadphase;
     /**
    * All bodies in this world
    */
@@ -158,7 +163,7 @@ public class World extends EventTarget {
         this.stepnumber = 0;
         this.default_dt = 1 / 60;
         this.nextId = 0;
-        this.gravity = new Vec3();
+        this.gravity = new Vec3() ; //(0,-10,0) ; //new Vec3();
         if (options.gravity != null) {
             this.gravity.copy(options.gravity);
         }
@@ -173,7 +178,7 @@ public class World extends EventTarget {
         this.constraints = new ArrayList<>();
         this.narrowphase = new Narrowphase(this);
         this.collisionMatrix = new ArrayCollisionMatrix();
-        this.collisionMatrixPrevious = new ArrayCollisionMatrix();
+        this.collisionMatrixPrevious = this.collisionMatrix;// new ArrayCollisionMatrix();
         this.bodyOverlapKeeper = new OverlapKeeper();
         this.shapeOverlapKeeper = new OverlapKeeper();
         this.contactmaterials = new ArrayList<>();
@@ -204,13 +209,13 @@ public class World extends EventTarget {
    * Store old collision state info
    */
     public void collisionMatrixTick() {
-        ArrayCollisionMatrix temp = collisionMatrixPrevious;
-        collisionMatrixPrevious = collisionMatrix;
-        collisionMatrix = temp;
-        collisionMatrix.reset();
+        ArrayCollisionMatrix temp = this.collisionMatrixPrevious;
+        this.collisionMatrixPrevious =  this.collisionMatrix;//new ArrayCollisionMatrix() ;
+        this.collisionMatrix = temp;
+        this.collisionMatrix.reset();
         
-        bodyOverlapKeeper.tick();
-        shapeOverlapKeeper.tick();
+        this.bodyOverlapKeeper.tick();
+        this.shapeOverlapKeeper.tick();
     }
     
     /**
@@ -299,7 +304,7 @@ public class World extends EventTarget {
                 body.initAngularVelocity.copy(body.angularVelocity);
                 body.initQuaternion.copy(body.quaternion);
             }
-            
+            //System.out.println(bodies.size());
             collisionMatrix.setNumObjects(bodies.size());
             addBodyEvent.body = body;
             idToBodyMap.put(body.id, body);
@@ -486,7 +491,7 @@ public class World extends EventTarget {
 
         // Update subsystems
         for (i = 0; i < this.subsystems.size(); i++) {
-            this.subsystems.get(i).update();
+          //  this.subsystems.get(i).update();
         }
 
         // Collision detection
@@ -611,11 +616,14 @@ public class World extends EventTarget {
                     bj.wakeUpAfterNarrowphase = true;
                 }
             }
-
+            
             // Now we know that i and j are in contact. Set the collision matrix state
             this.collisionMatrix.set(bi, bj, true);
+            
+            //System.out.println(bi);
+            //System.out.println(this.collisionMatrixPrevious.get(bi, bj)) ;
 
-            if (!this.collisionMatrixPrevious.get(bi, bj)) {
+            if (this.collisionMatrixPrevious.get(bi, bj) != 0) {
                 // First contact!
                 // We reuse the collideEvent object, otherwise, we will end up creating new objects for each new contact, even if there's no event listener attached.
                 World_step_collideEvent.body = bj;
@@ -784,7 +792,10 @@ public class World extends EventTarget {
                 if (shapeB != null) beginShapeContactEvent.bodyB = shapeB.body;
                 this.dispatchEvent(beginShapeContactEvent);
             }
-            beginShapeContactEvent.bodyA = beginShapeContactEvent.bodyB = beginShapeContactEvent.shapeA = beginShapeContactEvent.shapeB = null;
+            beginShapeContactEvent.bodyA =null;
+            beginShapeContactEvent.bodyB = null;
+            beginShapeContactEvent.shapeA = null;
+            beginShapeContactEvent.shapeB = null;
         }
 
         if (hasEndShapeContact) {
@@ -799,7 +810,10 @@ public class World extends EventTarget {
                 if (shapeB != null) endShapeContactEvent.bodyB = shapeB.body;
                 this.dispatchEvent(endShapeContactEvent);
             }
-            endShapeContactEvent.bodyA = endShapeContactEvent.bodyB = endShapeContactEvent.shapeA = endShapeContactEvent.shapeB = null;
+            endShapeContactEvent.bodyA = null;
+            endShapeContactEvent.bodyB = null;
+            endShapeContactEvent.shapeA = null;
+            endShapeContactEvent.shapeB = null;
         }
     }
 
@@ -828,21 +842,21 @@ public class World extends EventTarget {
     // performance.now() fallback on System.currentTimeMillis()
     //private Performance performance = new Performance();
 
-    public World() {
-        long nowOffset = System.currentTimeMillis();
-        this.performance.now = () -> System.currentTimeMillis() - nowOffset;
-    }
+//    public World() {
+//        long nowOffset = System.currentTimeMillis();
+//        this.performance.now = () -> System.currentTimeMillis() - nowOffset;
+//    }
 
     private Vec3 step_tmp1 = new Vec3();
 
     // Dispatched after the world has stepped forward in time.
     // Reusable event objects to save memory.
-    private Event World_step_postStepEvent = new Event("postStep");
+    private Event World_step_postStepEvent = new Event("postStep",null);
 
     // Dispatched before the world steps forward in time.
-    private Event World_step_preStepEvent = new Event("preStep");
+    private Event World_step_preStepEvent = new Event("preStep",null);
 
-    private Event World_step_collideEvent = new Event(Body.COLLIDE_EVENT_NAME);
+    private CollideEvent World_step_collideEvent = new CollideEvent(Body.COLLIDE_EVENT_NAME);
 
     // Pools for unused objects
     private List<ContactEquation> World_step_oldContacts = new ArrayList<>();
@@ -856,36 +870,12 @@ public class World extends EventTarget {
     private List<Integer> additions = new ArrayList<>();
     private List<Integer> removals = new ArrayList<>();
 
-    private class ContactEvent {
-        private String type;
-        private Body bodyA;
-        private Body bodyB;
-
-        public ContactEvent(String type) {
-            this.type = type;
-            this.bodyA = null;
-            this.bodyB = null;
-        }
-    }
+  
 
     private ContactEvent beginContactEvent = new ContactEvent("beginContact");
     private ContactEvent endContactEvent = new ContactEvent("endContact");
 
-    private class ShapeContactEvent {
-        private String type;
-        private Body bodyA;
-        private Body bodyB;
-        private Shape shapeA;
-        private Shape shapeB;
-
-        public ShapeContactEvent(String type) {
-            this.type = type;
-            this.bodyA = null;
-            this.bodyB = null;
-            this.shapeA = null;
-            this.shapeB = null;
-        }
-    }
+  
 
     private ShapeContactEvent beginShapeContactEvent = new ShapeContactEvent("beginShapeContact");
     private ShapeContactEvent endShapeContactEvent = new ShapeContactEvent("endShapeContact");

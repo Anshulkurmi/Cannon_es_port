@@ -18,27 +18,27 @@ public class ConvexPolyhedronContactPoint {
         this.depth = depth;
     }
 
-    public Vec3 getPoint() {
-        return point;
-    }
-
-    public void setPoint(Vec3 point) {
-        this.point = point;
-    }
-
-    public Vec3 getNormal() {
-        return normal;
-    }
-
-    public void setNormal(Vec3 normal) {
-        this.normal = normal;
-    }
-
-    public double getDepth() {
-        return depth;
-    }
-
-    public void setDepth(double depth) {
-        this.depth = depth;
-    }
+//    public Vec3 getPoint() {
+//        return point;
+//    }
+//
+//    public void setPoint(Vec3 point) {
+//        this.point = point;
+//    }
+//
+//    public Vec3 getNormal() {
+//        return normal;
+//    }
+//
+//    public void setNormal(Vec3 normal) {
+//        this.normal = normal;
+//    }
+//
+//    public double getDepth() {
+//        return depth;
+//    }
+//
+//    public void setDepth(double depth) {
+//        this.depth = depth;
+//    }
 }

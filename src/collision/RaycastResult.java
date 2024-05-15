@@ -9,7 +9,9 @@ import shapes.Shape;
 public class RaycastResult {
     /**
      * rayFromWorld
+     * 
      */
+	
     public Vec3 rayFromWorld;
     /**
      * rayToWorld

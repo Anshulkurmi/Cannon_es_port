@@ -1,15 +1,15 @@
 package collision;
 
 import java.util.ArrayList;
-import java.util.EventListener;
 import java.util.List;
 
-import math.Vec3;
-import math.JacobianElement;
-import math.Mat3; 
-import objects.Body;
-import shapes.Shape;
+import events.EventListener;
 
+import objects.Body;
+
+import events.AddBodyEvent;
+import events.Event;
+import events.RemoveBodyEvent;
 import world.World;
 
 /**
@@ -34,7 +34,7 @@ public class SAPBroadphase extends Broadphase {
      */
     private int axisIndex;
 
-    private final EventListener _addBodyHandler;
+    private final EventListener _addBodyHandler ;
     private final EventListener _removeBodyHandler;
 
     /**
@@ -49,11 +49,11 @@ public class SAPBroadphase extends Broadphase {
         this.axisIndex = 0;
 
         this._addBodyHandler = (event) -> {
-            axisList.add(event.body);
+            axisList.add(((AddBodyEvent) event).body);
         };
 
         this._removeBodyHandler = (event) -> {
-            int idx = axisList.indexOf(event.body);
+            int idx = axisList.indexOf(((RemoveBodyEvent) event).body);
             if (idx != -1) {
                 axisList.remove(idx);
             }
@@ -62,6 +62,17 @@ public class SAPBroadphase extends Broadphase {
         if (world != null) {
             setWorld(world);
         }
+    }
+    
+    
+ // Functional interface for adding bodies
+    interface AddBodyEventHandler {
+        void handleEvent(AddBodyEvent event);
+    }
+
+    // Functional interface for removing bodies
+    interface RemoveBodyEventHandler {
+        void handleEvent(RemoveBodyEvent event);
     }
 
     /**
@@ -77,13 +88,13 @@ public class SAPBroadphase extends Broadphase {
             this.axisList.add(world.bodies.get(i));
         }
 
-        // Remove old handlers, if any
-        world.removeEventListener('addBody', this._addBodyHandler);
-        world.removeEventListener('removeBody', this._removeBodyHandler);
+        // Remove old handlers, if any	
+        world.removeEventListener("addBody" , this._addBodyHandler);
+        world.removeEventListener("removeBody", this._removeBodyHandler);
 
         // Add handlers to update the list of bodies
-        world.addEventListener('addBody', this._addBodyHandler);
-        world.addEventListener('removeBody', this._removeBodyHandler);
+        world.addEventListener("addBody", this._addBodyHandler);
+        world.addEventListener("removeBody", this._removeBodyHandler);
 
         this.world = world;
         this.dirty = true;
@@ -252,7 +263,7 @@ public class SAPBroadphase extends Broadphase {
      * @return True if the bounds overlap, false otherwise.
      */
     public static boolean checkBounds(Body bi, Body bj, int axisIndex) {
-        double biPos, bjPos;
+        double biPos = 0, bjPos = 0;//initialised bipos and bjpos to 0
 
         if (axisIndex == 0) {
             biPos = bi.position.x;
@@ -267,8 +278,8 @@ public class SAPBroadphase extends Broadphase {
 
         double ri = bi.boundingRadius;
         double rj = bj.boundingRadius;
-        double boundA2 = biPos + ri;
-        double boundB1 = bjPos - rj;
+        double boundA2 = biPos  + ri;
+        double boundB1 = bjPos  - rj;
 
         return boundB1 < boundA2;
     }

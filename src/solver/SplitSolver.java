@@ -7,6 +7,7 @@ import java.util.Queue;
 
 import equations.Equation;
 import world.World;
+import world.WorldOptions;
 import objects.Body;
 
 /**
@@ -92,7 +93,7 @@ public class SplitSolver extends Solver {
         subsolver.tolerance = (this.tolerance);
         subsolver.iterations = (this.iterations);
 
-        World dummyWorld = new World();
+        World dummyWorld = new World(new WorldOptions());
         while (true) {
             SplitSolverNode child = getUnvisitedNode(nodes);
             if (child == null) {

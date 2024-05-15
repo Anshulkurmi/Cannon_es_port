@@ -3,7 +3,6 @@ package objects;
 import java.util.ArrayList;
 
 import math.Vec3;
-import math.JacobianElement;
 import math.Mat3;
 import objects.Body;
 import shapes.Box;
@@ -12,7 +11,8 @@ import material.Material;
 import world.World;
 import math.Quaternion;
 import collision.AABB;
-import utils.EventTarget;
+import events.Event;
+import events.EventTarget;
 
 //public class Body extends EventTarget{
 //	BodyTypes bodyType= BodyTypes.DYNAMIC;
@@ -21,9 +21,6 @@ import utils.EventTarget;
 
 import java.util.List;
 
-import javax.swing.text.Position;
-
-import org.w3c.dom.events.Event;
 
 /**
  * Base class for all body types.
@@ -76,24 +73,24 @@ public class Body extends EventTarget {
     // changed , wasn't initially in the source code , COLLIDE_EVENT
     // public static final Event COLLIDE_EVENT = new Event(COLLIDE_EVENT_NAME);
 
+    
     /**
      * Dispatched after a sleeping body has woken up.
      * 
      * @event wakeup
      */
-    public static final Event WAKEUP_EVENT = new Event("wakeup");
+    public static final Event WAKEUP_EVENT = new Event("wakeup",null);
     /**
-     * Dispatched after a sleeping body has woken up.
-     * 
-     * @event wakeup
+     * Dispatched after a body has gone in to the sleepy state.
+     * @event sleepy
      */
-    public static final Event SLEEPY_EVENT = new Event("sleepy");
+    public static final Event SLEEPY_EVENT = new Event("sleepy",null);
     /**
      * Dispatched after a body has fallen asleep.
      * 
      * @event sleep
      */
-    public static final Event SLEEP_EVENT = new Event("sleep");
+    public static final Event SLEEP_EVENT = new Event("sleep",null);
 
     public int id;// Identifier of the body.
     public int index; // Position of body in World.bodies. Updated by World and used in
@@ -315,7 +312,7 @@ public class Body extends EventTarget {
         this.initVelocity = new Vec3();
         this.force = new Vec3();
         // added , removed the needless code of checking for mass == null
-        double mass = options.mass; // options.mass != null ? options.mass : 0;
+        double mass = options.getMass(); // options.mass != null ? options.mass : 0;
         this.mass = mass;
         this.invMass = mass > 0 ? 1.0 / mass : 0;
         this.material = options.material;
@@ -385,8 +382,8 @@ public class Body extends EventTarget {
         this.wlambda = new Vec3();
         this.isTrigger = options.isTrigger; // options.isTrigger != null ? options.isTrigger : false;
 
-        if (options.shape != null) {
-            this.addShape(options.shape);
+        if (options.getShape() != null) {
+            this.addShape(options.getShape());
         }
 
         this.updateMassProperties();
@@ -396,11 +393,11 @@ public class Body extends EventTarget {
      * Wake the body up.
      */
     public void wakeUp() {
-        int prevState = sleepState;
-        sleepState = AWAKE;
+        int prevState = this.sleepState;
+        sleepState = Body.AWAKE;
         wakeUpAfterNarrowphase = false;
-        if (prevState == SLEEPING) {
-            dispatchEvent(wakeupEvent);
+        if (prevState == Body.SLEEPING) {
+            this.dispatchEvent(WAKEUP_EVENT);
         }
     }
 
@@ -429,12 +426,12 @@ public class Body extends EventTarget {
             if (sleepState == AWAKE && speedSquared < speedLimitSquared) {
                 this.sleepState = SLEEPY;
                 timeLastSleepy = time;
-                dispatchEvent(sleepyEvent);
+                dispatchEvent(SLEEPY_EVENT);
             } else if (sleepState == SLEEPY && speedSquared > speedLimitSquared) {
                 wakeUp();
             } else if (sleepState == SLEEPY && time - timeLastSleepy > sleepTimeLimit) {
                 sleep();
-                dispatchEvent(sleepEvent);
+                dispatchEvent(SLEEP_EVENT);
             }
         }
     }
@@ -495,7 +492,7 @@ public class Body extends EventTarget {
     }
 
     public Body addShape(Shape shape) {
-        addShape(shape, new Vec3(), new Quaternion());
+        return addShape(shape, new Vec3(), new Quaternion());
     }
 
     /**

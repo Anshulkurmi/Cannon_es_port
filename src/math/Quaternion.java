@@ -427,9 +427,11 @@ public class Quaternion {
         double sinom;
         double scale0;
         double scale1;
-
+        
+        // calc cosine
         cosom = ax * bx + ay * by + az * bz + aw * bw;
-
+        
+     // adjust signs (if necessary)
         if (cosom < 0.0) {
             cosom = -cosom;
             bx = -bx;
@@ -437,17 +439,23 @@ public class Quaternion {
             bz = -bz;
             bw = -bw;
         }
+        
+        // calculate coefficients
         if (1.0 - cosom > 0.000001) {
+        	 // standard case (slerp)
             omega = Math.acos(cosom);
             sinom = Math.sin(omega);
             scale0 = Math.sin((1.0 - t) * omega) / sinom;
             scale1 = Math.sin(t * omega) / sinom;
         }
         else {
+        	// "from" and "to" quaternions are very close
+            //  ... so we can do a linear interpolation
             scale0 = 1.0 - t;
             scale1 = t;
         }
-
+        
+        // calculate final values
         targetQuat.x = scale0 * ax + scale1 * bx;
         targetQuat.y = scale0 * ay + scale1 * by;
         targetQuat.z = scale0 * az + scale1 * bz;
@@ -471,7 +479,9 @@ public class Quaternion {
         double by = this.y;
         double bz = this.z;
         double bw = this.w;
+        
         double half_dt = dt * 0.5;
+        
         targetQuat.x += half_dt * (ax * bw + ay * bz - az * by);
         targetQuat.y += half_dt * (ay * bw + az * bx - ax * bz);
         targetQuat.z += half_dt * (az * bw + ax * by - ay * bx);

@@ -20,10 +20,10 @@ public class Plane extends Shape {
         super(ShapeTypes.PLANE); 
 
         // World oriented normal
-        worldNormal = new Vec3();
-        worldNormalNeedsUpdate = true;
+        this.worldNormal = new Vec3();
+        this.worldNormalNeedsUpdate = true;
 
-        boundingSphereRadius = Double.MAX_VALUE;
+        this.boundingSphereRadius = Double.MAX_VALUE;
     }
 
     /**
@@ -82,6 +82,6 @@ public class Plane extends Shape {
     @Override
     public void updateBoundingSphereRadius() {
         // The plane's bounding sphere radius is set to a large positive value.
-        boundingSphereRadius = Double.MAX_VALUE;
+        this.boundingSphereRadius = Double.MAX_VALUE;
     }
 }

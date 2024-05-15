@@ -27,15 +27,16 @@ public class Mat3 {
      * Sets the matrix to identity
      */
     public void identity() {
-        elements[0] = 1;
-        elements[1] = 0;
-        elements[2] = 0;
-        elements[3] = 0;
-        elements[4] = 1;
-        elements[5] = 0;
-        elements[6] = 0;
-        elements[7] = 0;
-        elements[8] = 1;
+    	double[] e = this.elements ;
+        e[0] = 1;
+        e[1] = 0;
+        e[2] = 0;
+        e[3] = 0;
+        e[4] = 1;
+        e[5] = 0;
+        e[6] = 0;
+        e[7] = 0;
+        e[8] = 1;
     }
 
     /**
@@ -51,9 +52,9 @@ public class Mat3 {
      * Sets the matrix diagonal elements from a Vec3
      */
     public void setTrace(Vec3 vector) {
-        elements[0] = vector.x;
-        elements[4] = vector.y;
-        elements[8] = vector.z;
+        this.elements[0] = vector.x;
+        this.elements[4] = vector.y;
+        this.elements[8] = vector.z;
     }
     
     public Vec3 getTrace() {
@@ -65,9 +66,9 @@ public class Mat3 {
      * @return target Vector 
      */
     public Vec3 getTrace(Vec3 target) {
-        target.x = elements[0];
-        target.y = elements[4];
-        target.z = elements[8];
+        target.x = this.elements[0];
+        target.y = this.elements[4];
+        target.z = this.elements[8];
         return target;
     }
     
@@ -81,6 +82,7 @@ public class Mat3 {
    * @param target Optional, target to save the result in.
    */
     public Vec3 vmult(Vec3 v, Vec3 target) {
+    	double[] elements = this.elements ;
         double x = v.x;
         double y = v.y;
         double z = v.z;
@@ -95,8 +97,8 @@ public class Mat3 {
      * Matrix-scalar multiplication
      */
     public void smult(double s) {
-        for (int i = 0; i < elements.length; i++) {
-            elements[i] *= s;
+        for (int i = 0; i < this.elements.length; i++) {
+            this.elements[i] *= s;
         }
     }
     
@@ -109,7 +111,7 @@ public class Mat3 {
    * @param matrix Matrix to multiply with from left side.
    */
     public Mat3 mmult(Mat3 matrix, Mat3 target) {
-        double[] A = elements;
+        double[] A = this.elements;
         double[] B = matrix.elements;
         double[] T = target.elements;
 
@@ -142,7 +144,7 @@ public class Mat3 {
      * @return target 
      */
     public Mat3 scale(Vec3 vector, Mat3 target) {
-        double[] e = elements;
+        double[] e = this.elements;
         double[] t = target.elements;
 
         for (int i = 0; i < 3; i++) {
@@ -155,7 +157,7 @@ public class Mat3 {
     }
     
     /**
-     * default case where no target given so , we created one
+     * default case where no target given so 
      * @param b
      * @return
      */
@@ -290,7 +292,7 @@ public class Mat3 {
     }
     /**
      * Reverse the matrix and store the reversed matrix in target matrix .
-     * @param target : target matrix
+     * @param target : target matrix to save in.
      * @return target 
      */
     public Mat3 reverse(Mat3 target) {
@@ -379,6 +381,9 @@ public class Mat3 {
         do {
             j = 2;
             do {
+            	if(Double.isNaN(nr + j + nc * i) || Double.isInfinite(nr + j + nc * i)) {
+            		throw new ArithmeticException("Could not reverse !") ;
+            	}
                 target.e(i, j, eqns[nr + j + nc * i]);
             } while (j-- > 0);
         } while (i-- > 0);
@@ -408,7 +413,7 @@ public class Mat3 {
         double wx = w * x2;
         double wy = w * y2;
         double wz = w * z2;
-        double[] e = elements;
+        double[] e = this.elements;
 
         e[3 * 0 + 0] = 1 - (yy + zz);
         e[3 * 0 + 1] = xy - wz;
@@ -432,7 +437,7 @@ public class Mat3 {
      *  @return target 
      */
     public Mat3 transpose(Mat3 target) {
-        double[] M = elements;
+        double[] M = this.elements;
         double[] T = target.elements;
         double tmp;
 

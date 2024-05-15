@@ -29,7 +29,7 @@ public class Box extends Shape {
     public ConvexPolyhedron convexPolyhedronRepresentation;
 
     
-    public Box(Vec3 halfExtents) {
+    public Box(Vec3 halfExtents) {	
     	this(halfExtents,null);
     }
     	   
@@ -40,11 +40,11 @@ public class Box extends Shape {
      */
     public Box(Vec3 halfExtents,ShapeOptions options) {
         super(ShapeTypes.BOX,options);
-
         this.halfExtents = halfExtents;
         this.convexPolyhedronRepresentation = null;
-        updateConvexPolyhedronRepresentation();
-        updateBoundingSphereRadius();
+        this.updateConvexPolyhedronRepresentation();
+        this.updateBoundingSphereRadius();
+        
     }
 
     /**
@@ -54,7 +54,7 @@ public class Box extends Shape {
         double sx = halfExtents.x;
         double sy = halfExtents.y;
         double sz = halfExtents.z;
-
+        
         // Vec3[] vertices = {
         //     new Vec3(-sx, -sy, -sz),
         //     new Vec3(sx, -sy, -sz),
@@ -85,13 +85,13 @@ public class Box extends Shape {
         //     {1, 2, 6, 5}  // +x
         // };
 
-        List<int[]> faces = new ArrayList<>();
-        faces.add(new int[] {3, 2, 1, 0});
-        faces.add(new int[] {4, 5, 6, 7});
-        faces.add(new int[] {5, 4, 0, 1});
-        faces.add(new int[] {2, 3, 7, 6});
-        faces.add(new int[] {0, 4, 7, 3});
-        faces.add(new int[] {1, 2, 6, 5});
+        List<Face> faces = new ArrayList<>();
+        faces.add(new Face(new int[] {3, 2, 1, 0}));
+        faces.add(new Face(new int[] {4, 5, 6, 7}));
+        faces.add(new Face(new int[] {5, 4, 0, 1}));
+        faces.add(new Face(new int[] {2, 3, 7, 6}));
+        faces.add(new Face(new int[] {0, 4, 7, 3}));
+        faces.add(new Face(new int[] {1, 2, 6, 5}));
 
         // Vec3[] axes = {
         //     new Vec3(0, 0, 1),
@@ -102,12 +102,14 @@ public class Box extends Shape {
         List<Vec3> axes = new ArrayList<Vec3>();
         axes.add(new Vec3(0, 0, 1));
         axes.add(new Vec3(0, 1, 0));
-         axes.add(new Vec3(0, 0, 1));
-
+        axes.add(new Vec3(0, 0, 1));
+         
+         
+        //System.out.println(vertices) ;
         //changed vertices , axes , faces types  to lists from arrays and updated convexPolyhedron h 
         ConvexPolyhedron h = new ConvexPolyhedron(vertices, faces,new ArrayList<>(), axes,0.0);
+        this.convexPolyhedronRepresentation = h;
         h.material= this.material;
-        convexPolyhedronRepresentation = h;
     }
 
     /**

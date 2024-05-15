@@ -1,16 +1,16 @@
 package objects;
 
-import collision.RaycastResult;
 import math.Transform;
 import math.Vec3;
-import utils.Utils;
 
 public class WheelInfo {
     /**
    * Max travel distance of the suspension, in meters.
    * @default 1
    */
-    private double maxSuspensionTravel;
+	public static Vec3 relpos = new Vec3();
+	public static Vec3 chassis_velocity_at_contactPoint = new Vec3() ;
+    public double maxSuspensionTravel;
     /**
    * Speed to apply to the wheel rotation when the wheel is sliding.
    * @default -0.1
@@ -61,9 +61,9 @@ public class WheelInfo {
    * frictionSlip
    * @default 10.5
    */
-    private double frictionSlip;
-    private double forwardAcceleration;
-    private double sideAcceleration;
+    protected double frictionSlip;
+    protected double forwardAcceleration;
+    protected double sideAcceleration;
     /**
    * steering
    * @default 0
@@ -83,7 +83,7 @@ public class WheelInfo {
    * rollInfluence
    * @default 0.01
    */
-    private double rollInfluence;
+    protected double rollInfluence;
     double maxSuspensionForce;
     double engineForce;
     double brake;
@@ -108,23 +108,23 @@ public class WheelInfo {
    */
     double suspensionForce;
 
-    private double slipInfo;
+    protected double slipInfo;
     /**
    * skidInfo
    * @default 0
    */
-    private double skidInfo;
+    protected double skidInfo;
     /**
    * suspensionLength
    * @default 0
    */
-    double suspensionLength;
-    private double sideImpulse;
-    private double forwardImpulse;
+    protected double suspensionLength;
+    protected double sideImpulse;
+    protected double forwardImpulse;
     /**
    * The result from raycasting.
    */
-    RaycastResult raycastResult;
+    WheelRaycastResult raycastResult;
     Transform worldTransform;
     boolean isInContact;
 
@@ -162,24 +162,65 @@ public class WheelInfo {
         this.suspensionLength = 0.0;
         this.sideImpulse = 0.0;
         this.forwardImpulse = 0.0;
-        this.raycastResult = new RaycastResult();
+        this.raycastResult = new WheelRaycastResult();
         this.worldTransform = new Transform();
         this.isInContact = false;
     }
 
     public WheelInfo(WheelInfoOptions options) {
-        options = Utils.defaults(options, new WheelInfoOptions());
+        //options = Utils.defaults(options, new WheelInfoOptions());
+        
         // Initialize fields based on options here
+        
+        this.maxSuspensionTravel = options.maxSuspensionTravel;
+        	    this.customSlidingRotationalSpeed = options.customSlidingRotationalSpeed;
+        	    this.useCustomSlidingRotationalSpeed = options.useCustomSlidingRotationalSpeed;
+        	    this.sliding = false;
+        	    this.chassisConnectionPointLocal = options.chassisConnectionPointLocal.clone() ;
+        	    this.chassisConnectionPointWorld = options.chassisConnectionPointWorld.clone() ;
+        	    this.directionLocal = options.directionLocal.clone();
+        	    this.directionWorld = options.directionWorld.clone();
+        	    this.axleLocal = options.axleLocal.clone();
+        	    this.axleWorld = options.axleWorld.clone();
+        	    this.suspensionRestLength = options.suspensionRestLength;
+        	    this.suspensionMaxLength = options.suspensionMaxLength;
+        	    this.radius = options.radius;
+        	    this.suspensionStiffness = options.suspensionStiffness;
+        	    this.dampingCompression = options.dampingCompression;
+        	    this.dampingRelaxation = options.dampingRelaxation;
+        	    this.frictionSlip = options.frictionSlip;
+        	    this.forwardAcceleration = options.forwardAcceleration;
+        	    this.sideAcceleration = options.sideAcceleration;
+        	    this.steering = 0;
+        	    this.rotation = 0;
+        	    this.deltaRotation = 0;
+        	    this.rollInfluence = options.rollInfluence;
+        	    this.maxSuspensionForce = options.maxSuspensionForce;
+        	    this.engineForce = 0;
+        	    this.brake = 0;
+        	    this.isFrontWheel = options.isFrontWheel;
+        	    this.clippedInvContactDotSuspension = 1;
+        	    this.suspensionRelativeVelocity = 0;
+        	    this.suspensionForce = 0;
+        	    this.slipInfo = 0;
+        	    this.skidInfo = 0;
+        	    this.suspensionLength = 0;
+        	    this.sideImpulse = 0;
+        	    this.forwardImpulse = 0;
+        	    this.raycastResult = new WheelRaycastResult();
+        	    this.worldTransform = new Transform();
+        	    this.isInContact = false;
+        	  
     }
 
     public void updateWheel(Body chassis) {
-        RaycastResult raycastResult = this.raycastResult;
+        WheelRaycastResult raycastResult = this.raycastResult;
 
         if (this.isInContact) {
-            double project = raycastResult.getHitNormalWorld().dot(raycastResult.getDirectionWorld());
-            raycastResult.getHitPointWorld().vsub(chassis.getPosition(), relpos);
+            double project = raycastResult.hitNormalWorld.dot(raycastResult.getDirectionWorld());
+            raycastResult.hitPointWorld.vsub(chassis.position, relpos);
             chassis.getVelocityAtWorldPoint(relpos, chassis_velocity_at_contactPoint);
-            double projVel = raycastResult.getHitNormalWorld().dot(chassis_velocity_at_contactPoint);
+            double projVel = raycastResult.hitNormalWorld.dot(chassis_velocity_at_contactPoint);
             if (project >= -0.1) {
                 this.suspensionRelativeVelocity = 0.0;
                 this.clippedInvContactDotSuspension = 1.0 / 0.1;
@@ -191,7 +232,7 @@ public class WheelInfo {
         } else {
             raycastResult.setSuspensionLength(this.suspensionRestLength);
             this.suspensionRelativeVelocity = 0.0;
-            raycastResult.getDirectionWorld().scale(-1.0, raycastResult.getHitNormalWorld());
+            raycastResult.getDirectionWorld().scale(-1.0, raycastResult.hitNormalWorld);
             this.clippedInvContactDotSuspension = 1.0;
         }
     }

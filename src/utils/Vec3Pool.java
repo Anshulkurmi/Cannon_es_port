@@ -5,7 +5,7 @@ import math.Vec3;
 /**
  * Vec3Pool
  */
-public class Vec3Pool extends Pool<Vec3> {
+public class Vec3Pool extends Pool {
     //private Class<Vec3> type = Vec3.class;
 
     /**

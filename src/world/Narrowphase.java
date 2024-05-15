@@ -17,6 +17,7 @@ import shapes.Box;
 import shapes.ConvexPolyhedron;
 import shapes.ConvexPolyhedronContactPoint;
 import shapes.Cylinder;
+import shapes.Face;
 import shapes.Heightfield;
 import shapes.Particle;
 import shapes.Plane;
@@ -276,28 +277,101 @@ public class Narrowphase {
 
                     // Get contacts
                     // check this ..... added
-                    CollisionTypes resolverIndex = si.type.ordinal() < sj.type.ordinal()
-                            ? CollisionTypes.values()[si.type.ordinal() | sj.type.ordinal()]
-                            : CollisionTypes.values()[sj.type.ordinal() | si.type.ordinal()];
-                    CollisionResolver resolver = this.resolvers.get(resolverIndex);
-                    if (resolver != null) {
-                        boolean retval = false;
-
-                        // TO DO: investigate why sphereParticle and convexParticle
-                        // resolvers expect si and sj shapes to be in reverse order
-                        // (i.e. larger integer value type first instead of smaller first)
-                        if (si.type.ordinal() < sj.type.ordinal()) {
-                            retval = resolver.resolve(si, sj, xi, xj, qi, qj, bi, bj, si, sj, justTest, this);
-                        } else {
-                            retval = resolver.resolve(sj, si, xj, xi, qj, qi, bj, bi, si, sj, justTest, this);
-                        }
-
-                        if (retval && justTest) {
-                            // Register overlap
-                            world.shapeOverlapKeeper.set(si.id, sj.id);
-                            world.bodyOverlapKeeper.set(bi.id, bj.id);
-                        }
+                    //CollisionTypes 
+                    int resolverIndex = si.type.getValue() | sj.type.getValue() ; //si.type.ordinal() < sj.type.ordinal()
+                           // ? CollisionTypes.values()[si.type.ordinal() | sj.type.ordinal()]
+                           //: CollisionTypes.values()[sj.type.ordinal() | si.type.ordinal()];
+                    //CollisionResolver resolver = this.resolvers.get(resolverIndex);
+                    
+                    boolean collisionOccured = false ;
+                    
+                    if(resolverIndex == 1) {
+                    	//Sphere si1 = (Sphere) si ;
+                    	//Sphere sj1 = (Sphere) sj ;
+                     	collisionOccured = sphereSphere((Sphere)si, (Sphere) sj, xi, xj, qi, qj, bi, bj, si, sj, justTest) ;
                     }
+                    else if(resolverIndex == 3) {
+                     	collisionOccured = spherePlane((Sphere)si, (Plane) sj, xi, xj, qi, qj, bi, bj, si, sj, justTest) ;
+                    }
+                    else if(resolverIndex == 4) {
+                     	collisionOccured = boxBox((Box)si, (Box) sj, xi, xj, qi, qj, bi, bj, si, sj, justTest) ;
+                    }
+                    else if(resolverIndex == 5) {
+                     	collisionOccured = sphereBox((Sphere)si, (Box) sj, xi, xj, qi, qj, bi, bj, si, sj, justTest) ;
+                    }
+                    else if(resolverIndex == 6) {
+                     	collisionOccured = planeBox((Plane)sj, (Box) si, xi, xj, qi, qj, bi, bj, si, sj, justTest) ;
+                    }
+                    else if(resolverIndex == 16) {
+                     	collisionOccured = convexConvex((ConvexPolyhedron)si, (ConvexPolyhedron) sj, xi, xj, qi, qj, bi, bj, si, sj, justTest,null,null) ;
+                    }
+                    else if(resolverIndex == 17) {
+                     	collisionOccured = sphereConvex((Sphere)si, (ConvexPolyhedron) sj, xi, xj, qi, qj, bi, bj, si, sj, justTest) ;
+                    }
+                    else if(resolverIndex == 18) {
+                     	collisionOccured = planeConvex((Plane)si, (ConvexPolyhedron) sj, xi, xj, qi, qj, bi, bj, si, sj, justTest) ;
+                    }
+                    else if(resolverIndex == 20) {
+                     	collisionOccured = boxConvex((Box)si, (ConvexPolyhedron) sj, xi, xj, qi, qj, bi, bj, si, sj, justTest) ;
+                    }
+                    else if(resolverIndex == 33) {
+                     	collisionOccured = sphereHeightfield((Sphere)si, (Heightfield) sj, xi, xj, qi, qj, bi, bj, si, sj, justTest) ;
+                    }
+                    else if(resolverIndex == 36) {
+                     	collisionOccured = boxHeightfield((Box)si, (Heightfield) sj, xi, xj, qi, qj, bi, bj, si, sj, justTest) ;
+                    }
+                    else if(resolverIndex == 48) {
+                     	collisionOccured = convexHeightfield((ConvexPolyhedron)si, (Heightfield) sj, xi, xj, qi, qj, bi, bj, si, sj, justTest) ;
+                    }
+                    else if(resolverIndex == 65) {
+                     	collisionOccured = sphereParticle((Sphere)si, (Particle) sj, xi, xj, qi, qj, bi, bj, si, sj, justTest) ;
+                    }
+                    else if(resolverIndex == 66) {
+                     	collisionOccured = planeParticle((Plane)si, (Particle) sj, xi, xj, qi, qj, bi, bj, si, sj, justTest) ;
+                    }
+                    else if(resolverIndex == 68) {
+                     	collisionOccured = boxParticle((Box)si, (Particle) sj, xi, xj, qi, qj, bi, bj, si, sj, justTest) ;
+                    }
+                    else if(resolverIndex == 80) {
+                     	collisionOccured = convexParticle((ConvexPolyhedron)si, (Particle) sj, xi, xj, qi, qj, bi, bj, si, sj, justTest) ;
+                    }
+                    else if(resolverIndex == 160) {
+                     	collisionOccured = heightfieldCylinder((Heightfield)si, (Cylinder) sj, xi, xj, qi, qj, bi, bj, si, sj, justTest) ;
+                    }
+                    else if(resolverIndex == 196) {
+                     	collisionOccured = particleCylinder((Particle)si, (Cylinder) sj, xi, xj, qi, qj, bi, bj, si, sj, justTest) ;
+                    }
+                    else if(resolverIndex == 257) {
+                     	collisionOccured = sphereTrimesh((Sphere)si, (Trimesh) sj, xi, xj, qi, qj, bi, bj, si, sj, justTest) ;
+                    }
+                    else if(resolverIndex == 258) {
+                     	collisionOccured = planeTrimesh((Plane)si, (Trimesh) sj, xi, xj, qi, qj, bi, bj, si, sj, justTest) ;
+                    }
+                    
+                    if(collisionOccured && justTest) {
+                    	// Register overlap
+                        world.shapeOverlapKeeper.set(si.id, sj.id);
+                        world.bodyOverlapKeeper.set(bi.id, bj.id);
+                    }
+                    
+//                    if (resolver != null) {
+//                        boolean retval = false;
+//
+//                        // TO DO: investigate why sphereParticle and convexParticle
+//                        // resolvers expect si and sj shapes to be in reverse order
+//                        // (i.e. larger integer value type first instead of smaller first)
+//                        if (si.type.ordinal() < sj.type.ordinal()) {
+//                            retval = resolver.resolve(si, sj, xi, xj, qi, qj, bi, bj, si, sj, justTest, this);
+//                        } else {
+//                            retval = resolver.resolve(sj, si, xj, xi, qj, qi, bj, bi, si, sj, justTest, this);
+//                        }
+//
+//                        if (retval && justTest) {
+//                            // Register overlap
+//                            world.shapeOverlapKeeper.set(si.id, sj.id);
+//                            world.bodyOverlapKeeper.set(bi.id, bj.id);
+//                        }
+//                    }
                 }
             }
         }
@@ -479,7 +553,7 @@ public class Narrowphase {
         }
 
         // Check corners
-        Vec3 rj = v3pool.get();
+        Vec3 rj = (Vec3) v3pool.get();
         Vec3 sphere_to_corner = sphereBox_sphere_to_corner;
         for (int j = 0; j != 2 && !found; j++) {
             for (int k = 0; k != 2 && !found; k++) {
@@ -533,11 +607,11 @@ public class Narrowphase {
         rj = null;
 
         // Check edges
-        Vec3 edgeTangent = v3pool.get();
-        Vec3 edgeCenter = v3pool.get();
-        Vec3 r = v3pool.get(); // r = edge center to sphere center
-        Vec3 orthogonal = v3pool.get();
-        Vec3 dist = v3pool.get();
+        Vec3 edgeTangent = (Vec3) v3pool.get();
+        Vec3 edgeCenter = (Vec3) v3pool.get();
+        Vec3 r = (Vec3) v3pool.get(); // r = edge center to sphere center
+        Vec3 orthogonal = (Vec3) v3pool.get();
+        Vec3 dist = (Vec3) v3pool.get();
         int Nsides = sides.length;
         for (int j = 0; j != Nsides && !found; j++) {
             for (int k = 0; k != Nsides && !found; k++) {
@@ -674,7 +748,7 @@ public class Narrowphase {
         Vec3Pool v3pool = this.v3pool;
         xi.vsub(xj, convex_to_sphere);
         List<Vec3> normals = sj.faceNormals;
-        List<int[]> faces = sj.faces;
+        List<Face> faces = sj.faces;
         List<Vec3> verts = sj.vertices;
         double R = si.radius;
         List<Integer> penetrating_sides = new ArrayList<>();
@@ -724,7 +798,7 @@ public class Narrowphase {
         // Check side (plane) intersections
         for (int i = 0, nfaces = faces.size(); i < nfaces && !found; i++) {
             Vec3 normal = normals.get(i);
-            int[] face = faces.get(i);
+            int[] face = faces.get(i).vertices;
 
             // Get world-transformed normal of the face
             Vec3 worldNormal = sphereConvex_worldNormal;
@@ -754,7 +828,7 @@ public class Narrowphase {
                 // Intersects plane. Now check if the sphere is inside the face polygon
                 List<Vec3> faceVerts = new ArrayList<>(); // Face vertices, in world coords
                 for (int j = 0, Nverts = face.length; j < Nverts; j++) {
-                    Vec3 worldVertex = v3pool.get();
+                    Vec3 worldVertex = (Vec3) v3pool.get();
                     qj.vmult(verts.get(face[j]), worldVertex);
                     xj.vadd(worldVertex, worldVertex);
                     faceVerts.add(worldVertex);
@@ -771,9 +845,9 @@ public class Narrowphase {
                     worldNormal.scale(-R, r.ri); // Contact offset, from sphere center to contact
                     worldNormal.negate(r.ni); // Normal pointing out of sphere
 
-                    Vec3 penetrationVec2 = v3pool.get();
+                    Vec3 penetrationVec2 = (Vec3) v3pool.get();
                     worldNormal.scale(-penetration, penetrationVec2);
-                    Vec3 penetrationSpherePoint = v3pool.get();
+                    Vec3 penetrationSpherePoint = (Vec3) v3pool.get();
                     worldNormal.scale(-R, penetrationSpherePoint);
 
                     xi.vsub(xj, r.rj);
@@ -804,8 +878,8 @@ public class Narrowphase {
                     // Edge?
                     for (int j = 0; j < face.length; j++) {
                         // Get two world transformed vertices
-                        Vec3 v1 = v3pool.get();
-                        Vec3 v2 = v3pool.get();
+                        Vec3 v1 = (Vec3) v3pool.get();
+                        Vec3 v2 = (Vec3) v3pool.get();
                         qj.vmult(verts.get(face[(j + 1) % face.length]), v1);
                         qj.vmult(verts.get(face[(j + 2) % face.length]), v2);
                         xj.vadd(v1, v1);
@@ -820,15 +894,15 @@ public class Narrowphase {
                         edge.unit(edgeUnit);
 
                         // p is xi projected onto the edge
-                        Vec3 p = v3pool.get();
-                        Vec3 v1_to_xi = v3pool.get();
+                        Vec3 p = (Vec3) v3pool.get();
+                        Vec3 v1_to_xi = (Vec3)v3pool.get();
                         xi.vsub(v1, v1_to_xi);
                         double dot = v1_to_xi.dot(edgeUnit);
                         edgeUnit.scale(dot, p);
                         p.vadd(v1, p);
 
                         // Compute a vector from p to the center of the sphere
-                        Vec3 xi_to_p = v3pool.get();
+                        Vec3 xi_to_p = (Vec3) v3pool.get();
                         p.vsub(xi, xi_to_p);
 
                         // Collision if the edge-sphere distance is less than the radius
@@ -869,7 +943,7 @@ public class Narrowphase {
                             v3pool.release(xi_to_p);
                             v3pool.release(v1_to_xi);
 
-                            return;
+                            return  true;
                         }
 
                         v3pool.release(v1);
@@ -1081,11 +1155,11 @@ public class Narrowphase {
             Body bj, Shape rsi, Shape rsj, boolean justTest) {
         si.convexPolyhedronRepresentation.material = si.material;
         si.convexPolyhedronRepresentation.collisionResponse = si.collisionResponse;
-        return this.convexHeightfield(si.convexPolyhedronRepresentation, sj, xi, xj, qi, qj, bi, bj, rsi, rsj,
-                justTest);
+        return this.convexHeightfield(si.convexPolyhedronRepresentation, sj, xi, xj, qi, qj, bi, bj, rsi, rsj,justTest);
+
     }
 
-    public void convexHeightfield(ConvexPolyhedron convexShape, Heightfield hfShape, Vec3 convexPos, Vec3 hfPos,Quaternion convexQuat, Quaternion hfQuat, Body convexBody, Body hfBody, Shape rsi, Shape rsj,boolean justTest) {
+    public boolean convexHeightfield(ConvexPolyhedron convexShape, Heightfield hfShape, Vec3 convexPos, Vec3 hfPos,Quaternion convexQuat, Quaternion hfQuat, Body convexBody, Body hfBody, Shape rsi, Shape rsj,boolean justTest) {
         double[][] data = hfShape.data;
         double w = hfShape.elementSize;
         double radius = convexShape.boundingSphereRadius;
@@ -1106,7 +1180,7 @@ public class Narrowphase {
 
         // Bail out if we are out of the terrain
         if (iMaxX < 0 || iMaxY < 0 || iMinX >= data.length || iMinY >= data[0].length) {
-            return;
+            return false ;
         }
 
         // Clamp index to edges
@@ -1142,7 +1216,7 @@ public class Narrowphase {
 
         // Bail out if we can't touch the bounding height box
         if (localConvexPos.z - radius > max || localConvexPos.z + radius < min) {
-            return;
+            return false ;
         }
 
         for (int i = iMinX; i < iMaxX; i++) {
@@ -1159,7 +1233,7 @@ public class Narrowphase {
                 }
 
                 if (justTest && intersecting) {
-                    return;
+                    return true;
                 }
 
                 // Upper triangle
@@ -1172,13 +1246,14 @@ public class Narrowphase {
                 }
 
                 if (justTest && intersecting) {
-                    return;
+                    return true ;
                 }
             }
         }
+        return false ;
     }
 
-    public void sphereParticle(Sphere sj, Particle si, Vec3 xj, Vec3 xi, Quaternion qj, Quaternion qi, Body bj, Body bi,
+    public boolean sphereParticle(Sphere sj, Particle si, Vec3 xj, Vec3 xi, Quaternion qj, Quaternion qi, Body bj, Body bi,
             Shape rsi, Shape rsj, boolean justTest) {
         // The normal is the unit vector from sphere center to particle center
         Vec3 normal = particleSphere_normal;
@@ -1188,7 +1263,7 @@ public class Narrowphase {
 
         if (lengthSquared <= sj.radius * sj.radius) {
             if (justTest) {
-                return;
+                return true;
             }
             ContactEquation r = this.createContactEquation(bi, bj, si, sj, rsi, rsj);
             normal.normalize();
@@ -1201,9 +1276,10 @@ public class Narrowphase {
             this.result.add(r);
             this.createFrictionEquationsFromContact(r, this.frictionResult);
         }
+        return false ;
     }
 
-    public void planeParticle(Plane sj, Particle si, Vec3 xj, Vec3 xi, Quaternion qj, Quaternion qi, Body bj, Body bi,
+    public boolean planeParticle(Plane sj, Particle si, Vec3 xj, Vec3 xi, Quaternion qj, Quaternion qi, Body bj, Body bi,
             Shape rsi, Shape rsj, boolean justTest) {
         Vec3 normal = particlePlane_normal;
         normal.set(0, 0, 1);
@@ -1214,7 +1290,7 @@ public class Narrowphase {
 
         if (dot <= 0.0) {
             if (justTest) {
-                return;
+                return true ;
             }
 
             ContactEquation r = this.createContactEquation(bi, bj, si, sj, rsi, rsj);
@@ -1233,16 +1309,19 @@ public class Narrowphase {
             this.result.add(r);
             this.createFrictionEquationsFromContact(r, this.frictionResult);
         }
+        return false;
     }
 
-    public void boxParticle(Box si, Particle sj, Vec3 xi, Vec3 xj, Quaternion qi, Quaternion qj, Body bi, Body bj,
+    public boolean boxParticle(Box si, Particle sj, Vec3 xi, Vec3 xj, Quaternion qi, Quaternion qj, Body bi, Body bj,
             Shape rsi, Shape rsj, boolean justTest) {
+    	
         si.convexPolyhedronRepresentation.material = si.material;
         si.convexPolyhedronRepresentation.collisionResponse = si.collisionResponse;
-        this.convexParticle(si.convexPolyhedronRepresentation, sj, xi, xj, qi, qj, bi, bj, si, rsj, justTest);
+        return this.convexParticle(si.convexPolyhedronRepresentation, sj, xi, xj, qi, qj, bi, bj, si, rsj, justTest);
+        
     }
 
-    public void convexParticle(ConvexPolyhedron sj, Particle si, Vec3 xj, Vec3 xi, Quaternion qj, Quaternion qi,Body bj, Body bi, Shape rsi, Shape rsj, boolean justTest) {
+    public boolean convexParticle(ConvexPolyhedron sj, Particle si, Vec3 xj, Vec3 xi, Quaternion qj, Quaternion qi,Body bj, Body bi, Shape rsi, Shape rsj, boolean justTest) {
         int penetratedFaceIndex = -1;
         Vec3 penetratedFaceNormal = convexParticle_penetratedFaceNormal;
         Vec3 worldPenetrationVec = convexParticle_worldPenetrationVec;
@@ -1256,7 +1335,7 @@ public class Narrowphase {
         qj.conjugate(cqj);
         cqj.vmult(local, local);
 
-        if (sj.pointIsInside(local)) {
+        if (sj.pointIsInside(local) > 0) {
             if (sj.worldVerticesNeedsUpdate) {
                 sj.computeWorldVertices(xj, qj);
             }
@@ -1269,7 +1348,7 @@ public class Narrowphase {
                 // Construct world face vertices
                 List<Vec3> verts = new ArrayList<>();
                 // changed
-                verts.add(sj.worldVertices.get(sj.faces.get(i)[0]));
+                verts.add(sj.worldVertices.get(sj.faces.get(i).vertices[0]));
                 Vec3 normal = sj.worldFaceNormals.get(i);
 
                 // Check how much the particle penetrates the polygon plane.
@@ -1277,7 +1356,7 @@ public class Narrowphase {
                 double penetration = -normal.dot(convexParticle_vertexToParticle);
                 if (minPenetration == null || Math.abs(penetration) < Math.abs(minPenetration)) {
                     if (justTest) {
-                        return;
+                        return true ;
                     }
 
                     minPenetration = penetration;
@@ -1319,19 +1398,20 @@ public class Narrowphase {
                 System.out.println("Point found inside convex, but did not find penetrating face!");
             }
         }
+        return false ;
     }
 
-    public void heightfieldCylinder(Heightfield hfShape, Cylinder convexShape, Vec3 hfPos, Vec3 convexPos,
+    public boolean heightfieldCylinder(Heightfield hfShape, Cylinder convexShape, Vec3 hfPos, Vec3 convexPos,
             Quaternion hfQuat, Quaternion convexQuat, Body hfBody, Body convexBody, Shape rsi, Shape rsj,boolean justTest) {
-        this.convexHeightfield((ConvexPolyhedron) convexShape, hfShape, convexPos, hfPos, convexQuat, hfQuat,
+        return this.convexHeightfield((ConvexPolyhedron) convexShape, hfShape, convexPos, hfPos, convexQuat, hfQuat,
                 convexBody, hfBody, rsi, rsj, justTest);
     }
 
-    public void particleCylinder(Particle si, Cylinder sj, Vec3 xi, Vec3 xj, Quaternion qi, Quaternion qj, Body bi,Body bj, Shape rsi, Shape rsj, boolean justTest) {
-        this.convexParticle((ConvexPolyhedron) sj, si, xj, xi, qj, qi, bj, bi, rsi, rsj, justTest);
+    public boolean particleCylinder(Particle si, Cylinder sj, Vec3 xi, Vec3 xj, Quaternion qi, Quaternion qj, Body bi,Body bj, Shape rsi, Shape rsj, boolean justTest) {
+        return this.convexParticle((ConvexPolyhedron) sj, si, xj, xi, qj, qi, bj, bi, rsi, rsj, justTest);
     }
 
-    public void sphereTrimesh(Sphere sphereShape, Trimesh trimeshShape, Vec3 spherePos, Vec3 trimeshPos,
+    public boolean sphereTrimesh(Sphere sphereShape, Trimesh trimeshShape, Vec3 spherePos, Vec3 trimeshPos,
             Quaternion sphereQuat, Quaternion trimeshQuat, Body sphereBody, Body trimeshBody, Shape rsi, Shape rsj,
             boolean justTest) {
         Vec3 edgeVertexA = sphereTrimesh_edgeVertexA;
@@ -1379,7 +1459,7 @@ public class Narrowphase {
                     v.vsub(spherePos, relpos);
 
                     if (justTest) {
-                        return;
+                        return true;
                     }
 
                     ContactEquation r = this.createContactEquation(sphereBody, trimeshBody, sphereShape, trimeshShape,
@@ -1433,7 +1513,7 @@ public class Narrowphase {
                     double dist = tmp.distanceTo(localSpherePos);
                     if (dist < sphereShape.radius) {
                         if (justTest) {
-                            return;
+                            return true;
                         }
 
                         ContactEquation r = this.createContactEquation(sphereBody, trimeshBody, sphereShape,
@@ -1456,6 +1536,7 @@ public class Narrowphase {
                     }
                 }
             }
+            
         }
 
         // Triangle faces
@@ -1475,7 +1556,7 @@ public class Narrowphase {
             dist = tmp.distanceTo(localSpherePos);
             if (Ray.pointInTriangle(tmp, va, vb, vc) && dist < sphereShape.radius) {
                 if (justTest) {
-                    return;
+                    return true;
                 }
                 ContactEquation r = this.createContactEquation(sphereBody, trimeshBody, sphereShape, trimeshShape, rsi,
                         rsj);
@@ -1498,9 +1579,10 @@ public class Narrowphase {
         }
 
         triangles.clear();
+        return false ;
     }
 
-    public void planeTrimesh(Plane planeShape, Trimesh trimeshShape, Vec3 planePos, Vec3 trimeshPos,Quaternion planeQuat, Quaternion trimeshQuat, Body planeBody, Body trimeshBody, Shape rsi, Shape rsj,boolean justTest) {
+    public boolean planeTrimesh(Plane planeShape, Trimesh trimeshShape, Vec3 planePos, Vec3 trimeshPos,Quaternion planeQuat, Quaternion trimeshQuat, Body planeBody, Body trimeshBody, Shape rsi, Shape rsj,boolean justTest) {
         // Make contacts!
         Vec3 v = new Vec3();
 
@@ -1524,7 +1606,7 @@ public class Narrowphase {
 
             if (dot <= 0.0) {
                 if (justTest) {
-                    return;
+                    return true;
                 }
 
                 ContactEquation r = this.createContactEquation(planeBody, trimeshBody, planeShape, trimeshShape, rsi,
@@ -1549,16 +1631,17 @@ public class Narrowphase {
                 this.createFrictionEquationsFromContact(r, this.frictionResult);
             }
         }
+        return false ;
     }
 
-    private Vec3 averageNormal = new Vec3();
-    private Vec3 averageContactPointA = new Vec3();
-    private Vec3 averageContactPointB = new Vec3();
+    private static Vec3 averageNormal = new Vec3();
+    private static Vec3 averageContactPointA = new Vec3();
+    private static Vec3 averageContactPointB = new Vec3();
 
-    private Vec3 tmpVec1 = new Vec3();
-    private Vec3 tmpVec2 = new Vec3();
-    private Quaternion tmpQuat1 = new Quaternion();
-    private Quaternion tmpQuat2 = new Quaternion();
+    private static Vec3 tmpVec1 = new Vec3();
+    private static Vec3 tmpVec2 = new Vec3();
+    private static Quaternion tmpQuat1 = new Quaternion();
+    private static Quaternion tmpQuat2 = new Quaternion();
 
     //private int numWarnings = 0;
     //private final int maxWarnings = 10;
@@ -1571,33 +1654,33 @@ public class Narrowphase {
     //     System.out.println(msg);
     // }
 
-    private Vec3 planeTrimesh_normal = new Vec3();
-    private Vec3 planeTrimesh_relpos = new Vec3();
-    private Vec3 planeTrimesh_projected = new Vec3();
+    private static Vec3 planeTrimesh_normal = new Vec3();
+    private static Vec3 planeTrimesh_relpos = new Vec3();
+    private static Vec3 planeTrimesh_projected = new Vec3();
 
-    private Vec3 sphereTrimesh_normal = new Vec3();
-    private Vec3 sphereTrimesh_relpos = new Vec3();
+    private static Vec3 sphereTrimesh_normal = new Vec3();
+    private static Vec3 sphereTrimesh_relpos = new Vec3();
     //private Vec3 sphereTrimesh_projected = new Vec3();
-    private Vec3 sphereTrimesh_v = new Vec3();
-    private Vec3 sphereTrimesh_v2 = new Vec3();
-    private Vec3 sphereTrimesh_edgeVertexA = new Vec3();
-    private Vec3 sphereTrimesh_edgeVertexB = new Vec3();
-    private Vec3 sphereTrimesh_edgeVector = new Vec3();
-    private Vec3 sphereTrimesh_edgeVectorUnit = new Vec3();
-    private Vec3 sphereTrimesh_localSpherePos = new Vec3();
-    private Vec3 sphereTrimesh_tmp = new Vec3();
-    private Vec3 sphereTrimesh_va = new Vec3();
-    private Vec3 sphereTrimesh_vb = new Vec3();
-    private Vec3 sphereTrimesh_vc = new Vec3();
-    private AABB sphereTrimesh_localSphereAABB = new AABB();
-    private List<Integer> sphereTrimesh_triangles = new ArrayList<>();
+    private static Vec3 sphereTrimesh_v = new Vec3();
+    private static Vec3 sphereTrimesh_v2 = new Vec3();
+    private static Vec3 sphereTrimesh_edgeVertexA = new Vec3();
+    private static Vec3 sphereTrimesh_edgeVertexB = new Vec3();
+    private static Vec3 sphereTrimesh_edgeVector = new Vec3();
+    private static Vec3 sphereTrimesh_edgeVectorUnit = new Vec3();
+    private static Vec3 sphereTrimesh_localSpherePos = new Vec3();
+    private static Vec3 sphereTrimesh_tmp = new Vec3();
+    private static Vec3 sphereTrimesh_va = new Vec3();
+    private static Vec3 sphereTrimesh_vb = new Vec3();
+    private static Vec3 sphereTrimesh_vc = new Vec3();
+    private static AABB sphereTrimesh_localSphereAABB = new AABB();
+    private static List<Integer> sphereTrimesh_triangles = new ArrayList<>();
 
-    private Vec3 point_on_plane_to_sphere = new Vec3();
-    private Vec3 plane_to_sphere_ortho = new Vec3();
+    private static Vec3 point_on_plane_to_sphere = new Vec3();
+    private static Vec3 plane_to_sphere_ortho = new Vec3();
 
-    private Vec3 pointInPolygon_edge = new Vec3();
-    private Vec3 pointInPolygon_edge_x_normal = new Vec3();
-    private Vec3 pointInPolygon_vtp = new Vec3();
+    private static Vec3 pointInPolygon_edge = new Vec3();
+    private static Vec3 pointInPolygon_edge_x_normal = new Vec3();
+    private static Vec3 pointInPolygon_vtp = new Vec3();
 
     private boolean pointInPolygon(List<Vec3> verts, Vec3 normal, Vec3 p) {
         Boolean positiveResult = null;

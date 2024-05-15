@@ -10,7 +10,7 @@ import objects.Body;
  * Hinge constraint. Think of it as a door hinge. It tries to keep the door in the correct place and with the correct orientation.
  */
 public class HingeConstraint extends PointToPointConstraint {
-    private Vec3 axisA; // Rotation axis, defined locally in bodyA
+    public Vec3 axisA; // Rotation axis, defined locally in bodyA
     private Vec3 axisB; // Rotation axis, defined locally in bodyB
     private RotationalEquation rotationalEquation1;
     private RotationalEquation rotationalEquation2;

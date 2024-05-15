@@ -35,7 +35,7 @@ public class Sphere extends Shape {
             throw new IllegalArgumentException("The sphere radius cannot be negative.");
         }
 
-        updateBoundingSphereRadius();
+        this.updateBoundingSphereRadius();
     }
 
     /** calculateLocalInertia */

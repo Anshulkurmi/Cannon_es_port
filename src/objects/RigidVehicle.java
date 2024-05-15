@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import constraints.HingeConstraint;
+import constraints.HingeConstraintOptions;
+import constraints.MotorHingeConstraint;
+import events.Event;
 import math.Vec3;
 import shapes.Box;
 import shapes.Sphere;
@@ -14,7 +17,7 @@ public class RigidVehicle {
     private List<Body> wheelBodies; // List to store wheel bodies
     private Vec3 coordinateSystem; // Coordinate system for the vehicle
     private Body chassisBody; // Chassis body of the vehicle
-    private List<HingeConstraint> constraints; // Constraints for the wheels
+    private List<MotorHingeConstraint> constraints; // Constraints for the wheels
     private List<Vec3> wheelAxes; // Axes of rotation for the wheels
     private List<Double> wheelForces; // Forces applied to the wheels
 
@@ -58,7 +61,7 @@ public class RigidVehicle {
         Vec3 axis = options.axis != null ? options.axis.clone() : new Vec3(0, 0, 1);
         this.wheelAxes.add(axis);
 
-    HingeConstraint hingeConstraint = new HingeConstraint(this.chassisBody, wheelBody, new HingeConstraintOptions(position,axis,Vec3.ZERO,axis,false));
+        MotorHingeConstraint hingeConstraint = new MotorHingeConstraint(this.chassisBody, wheelBody, new HingeConstraintOptions(position,axis,Vec3.ZERO,axis,false));
         this.constraints.add(hingeConstraint); // Add the hinge constraint
 
         return this.wheelBodies.size() - 1;
@@ -79,7 +82,7 @@ public class RigidVehicle {
 
     // Method to set the target rotational speed of the hinge constraint
     public void setMotorSpeed(double value, int wheelIndex) {
-        HingeConstraint hingeConstraint = this.constraints.get(wheelIndex);
+        MotorHingeConstraint hingeConstraint = this.constraints.get(wheelIndex);
         hingeConstraint.enableMotor();
         hingeConstraint.motorTargetVelocity = value;
     }
@@ -109,6 +112,8 @@ public class RigidVehicle {
 
     // Method to add the vehicle including its constraints to the world
     public void addToWorld(World world) {
+    	//HingeConstraint contraints = this.constraints ;
+    	
         List<Body> bodies = new ArrayList<>(this.wheelBodies);
         bodies.add(this.chassisBody);
 
@@ -123,7 +128,7 @@ public class RigidVehicle {
         world.addEventListener("preStep", this::_update);
     }
 
-    private void _update() {
+    private void _update(Event event) {
         for (int i = 0; i < this.wheelForces.size(); i++) {
             this.applyWheelForce(this.wheelForces.get(i), i);
         }

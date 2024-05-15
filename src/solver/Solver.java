@@ -39,7 +39,9 @@ public class Solver {
 
     // Method to remove an equation from the list
     public void removeEquation(Equation eq) {
-        equations.remove(eq);
+    	if(this.equations.contains(eq)) {
+    		this.equations.remove(eq);
+    	}
     }
 
     // Method to remove all equations from the list

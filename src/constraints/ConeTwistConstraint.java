@@ -66,12 +66,12 @@ public class ConeTwistConstraint extends PointToPointConstraint {
         //added 
         this.twistAngle = Double.isNaN(options.twistAngle) ? 0 : options.twistAngle ; 
         // Make the cone equation push the bodies toward the cone axis, not outward
-        coneEquation.maxForce = 0;
-        coneEquation.minForce = -maxForce;
+        this.coneEquation.maxForce = 0;
+        this.coneEquation.minForce = -maxForce;
 
         // Make the twist equation add torque toward the initial position
-        twistEquation.maxForce = 0;
-        twistEquation.minForce = -maxForce;
+        this.twistEquation.maxForce = 0;
+        this.twistEquation.minForce = -maxForce;
 
         this.equations.add(coneEquation);
         this.equations.add(twistEquation);

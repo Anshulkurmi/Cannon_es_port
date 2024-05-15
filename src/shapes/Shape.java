@@ -13,7 +13,7 @@ public abstract class Shape {
 	 * Identifier of the Shape.
 	 */
 	public int id;
-
+	
 	/**
 	 * The type of this shape. Must be set to a valid ShapeTypes value.
 	 */
@@ -80,6 +80,13 @@ public abstract class Shape {
 			this.collisionFilterGroup = options.collisionFilterGroup;
 			this.collisionFilterMask = options.collisionFilterMask;
 			this.material = options.material;
+		}
+		else {
+			this.boundingSphereRadius = 0;
+			this.collisionResponse = true ;
+			this.collisionFilterGroup = 1;
+	    	this.collisionFilterMask = -1;
+	    	this.material = null ;
 		}
 		this.body = null;
 	}

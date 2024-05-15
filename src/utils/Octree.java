@@ -6,7 +6,11 @@ import collision.AABB;
  * Octree
  */
 public class Octree extends OctreeNode {
-    public int maxDepth; // Maximum subdivision depth
+	/**
+	 * Maximum subdivision depth
+	 * @default 8
+	 */
+    public int maxDepth; // 
 
     //added default constructor
     public Octree() {
@@ -14,7 +18,7 @@ public class Octree extends OctreeNode {
     }
 
     public Octree(AABB aabb, int maxDepth) {
-        super();
+        super(aabb);
         this.maxDepth = maxDepth;
     }
 

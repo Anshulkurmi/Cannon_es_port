@@ -72,7 +72,7 @@ public class OctreeNode {
             // Subdivide if there are no children yet
             boolean subdivided = false;
             if (children.isEmpty()) {
-                subdivide();
+                this.subdivide();
                 subdivided = true;
             }
 
@@ -90,12 +90,16 @@ public class OctreeNode {
         }
 
         // Too deep, or children didn't want it. Add it to the current node
-        data.add(elementData);
+        this.data.add(elementData);
 
         return true;
     }
 
+    /**
+     * Create 8 equally sized children nodes and put them in the `children` array.
+     */
     public void subdivide() {
+    	AABB aabb = this.aabb ;
         Vec3 l = aabb.lowerBound;
         Vec3 u = aabb.upperBound;
 
@@ -168,7 +172,7 @@ public class OctreeNode {
 
         ray.getAABB(tmpAABB);
         tmpAABB.toLocalFrame(treeTransform, tmpAABB);
-        aabbQuery(tmpAABB, result);
+        this.aabbQuery(tmpAABB, result);
 
         return result;
     }
@@ -177,8 +181,8 @@ public class OctreeNode {
    * removeEmptyNodes
    */
     public void removeEmptyNodes() {
-        for (int i = children.size() - 1; i >= 0; i--) {
-            OctreeNode child = children.get(i);
+        for (int i = this.children.size() - 1; i >= 0; i--) {
+            OctreeNode child = this.children.get(i);
             child.removeEmptyNodes();
             if (child.children.isEmpty() && child.data.isEmpty()) {
                 children.remove(i);

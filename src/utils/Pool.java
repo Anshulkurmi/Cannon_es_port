@@ -1,67 +1,71 @@
 package utils ;
-
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * For pooling objects that can be reused.
- * @param <T> The type of objects to pool.
  */
-public class Pool<T> {
-	/** pool of free available objects */
-    protected ArrayList<T> objects = new ArrayList<T>();
+public class Pool {
+    /**
+     * The objects list.
+     */
+    private List<Object> objects = new ArrayList<>();
+    /**
+     * The type of the objects.
+     */
+    private Class<?> type = Object.class;
 
     /**
-     * Release one or more objects after use.
-     * @param args The array of objects to release.
-     * @return This Pool instance, for method chaining.
+     * Release an object after use.
+     * @param args Objects to be released.
+     * @return The Pool instance for chaining.
      */
-    // public Pool<T> release(T[] args) {
-    //     for (T obj : args) {
-    //         objects.add(obj);
-    //     }
-    //     return this;
-    // }
-    //changed T[] to T 
-    public  Pool<T> release(T args){
-        objects.add(args);
+    public Pool release(Object... args) {
+        int Nargs = args.length;
+        for (int i = 0; i < Nargs; i++) {
+            this.objects.add(args[i]);
+        }
         return this;
     }
 
     /**
-     * Get an object from the pool.
-     * @return An object from the pool.
+     * Get an object.
+     * @return The retrieved object.
      */
-    public T get() {
-        if (objects.isEmpty()) {
-            return constructObject();
+    public Object get() {
+        if (this.objects.isEmpty()) {
+            return this.constructObject();
         } else {
-            return objects.remove(objects.size() - 1);
+            return this.objects.remove(this.objects.size() - 1);
         }
     }
 
     /**
-     * Construct a new object. This method should be implemented in each subclass.
-     * @return A new object.
-     * @throws UnsupportedOperationException If this method is not implemented in the subclass.
+     * Construct an object. Should be implemented in each subclass.
+     * @throws UnsupportedOperationException if not implemented in a subclass.
      */
-    protected T constructObject() {
+    protected Object constructObject() {
         throw new UnsupportedOperationException("constructObject() not implemented in this Pool subclass yet!");
     }
 
     /**
      * Resize the pool to a specific size.
-     * @param size The desired size of the pool.
-     * @return This Pool instance, for method chaining.
+     * @param size The new size of the pool.
+     * @return Self, for chaining.
      */
-    public Pool<T> resize(int size) {
+    public Pool resize(int size) {
+        List<Object> objects = this.objects;
+
         while (objects.size() > size) {
             objects.remove(objects.size() - 1);
         }
 
         while (objects.size() < size) {
-            objects.add(constructObject());
+            objects.add(this.constructObject());
         }
 
         return this;
     }
 }
+
+

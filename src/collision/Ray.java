@@ -10,6 +10,7 @@ import world.World;
 import objects.Body;
 import shapes.Box;
 import shapes.ConvexPolyhedron;
+import shapes.Face;
 import shapes.Heightfield;
 import shapes.Plane;
 import shapes.Shape;
@@ -108,7 +109,7 @@ public class Ray {
 		this.mode = RayModes.ANY;
 		this.result = new RaycastResult();
 		this.hasHit = false;
-		this.callback = DUMMY_CALLBACK;
+		this.callback = null;
 		this.direction = to.vsub(from).unit();
 	}
 
@@ -116,28 +117,61 @@ public class Ray {
    * Do itersection against all bodies in the given World.
    * @return True if the ray hit anything, otherwise false.
    */
+	
 	public boolean intersectWorld(World world, RayOptions options) {
+        this.mode = options.mode != null ? options.mode : Ray.ANY;
+        this.result = options.result != null ? options.result : new RaycastResult();
+        this.skipBackfaces = options.skipBackfaces;
+        this.collisionFilterMask = options.collisionFilterMask != -1 ? options.collisionFilterMask : -1;
+        this.collisionFilterGroup = options.collisionFilterGroup != -1 ? options.collisionFilterGroup : -1;
+        this.checkCollisionResponse = options.checkCollisionResponse;
 
-		List<Body> bodies = world.bodies;
-		//this.callback = callback;
-		this.hasHit = false;
-		this.result = new RaycastResult();
+        if (options.from != null) {
+            this.from.copy(options.from);
+        }
+        if (options.to != null) {
+            this.to.copy(options.to);
+        }
 
-		for (Body body : bodies) {
-			if (checkCollisionResponse && !body.collisionResponse) {
-				continue;
-			}
+        this.callback = options.callback != null ? options.callback : null ; //() -> {};
+        this.hasHit = false;
 
-			if ((collisionFilterGroup & body.collisionFilterMask) == 0
-					|| (body.collisionFilterGroup & collisionFilterMask) == 0) {
-				continue;
-			}
+        this.result.reset();
+        this.updateDirection();
 
-			intersectBody(body);
-		}
+        this.getAABB(tmpAABB);
+        ArrayList<Body> tmpArray = new ArrayList<>();
+        world.broadphase.aabbQuery(world, tmpAABB, tmpArray);
+        this.intersectBodies(tmpArray);
 
-		return hasHit;
-	}
+        return this.hasHit;
+    }
+
+    // Additional methods such as `updateDirection`, `getAABB`, and `intersectBodies` would be needed.
+
+
+//	public boolean intersectWorld(World world, RayOptions options) {
+//
+//		List<Body> bodies = world.bodies;
+//		//this.callback = callback;
+//		this.hasHit = false;
+//		this.result = new RaycastResult();
+//
+//		for (Body body : bodies) {
+//			if (checkCollisionResponse && !body.collisionResponse) {
+//				continue;
+//			}
+//
+//			if ((collisionFilterGroup & body.collisionFilterMask) == 0
+//					|| (body.collisionFilterGroup & collisionFilterMask) == 0) {
+//				continue;
+//			}
+//
+//			this.intersectBody(body);
+//		}
+//
+//		return this.hasHit;
+//	}
 
 	public void intersectBody(Body body) {
 		intersectBody(body, new RaycastResult());
@@ -284,7 +318,7 @@ public class Ray {
 		direction.scale(t, dir_scaled_with_t);
 		from.vadd(dir_scaled_with_t, hitPointWorld);
 
-		reportIntersection(worldNormal, hitPointWorld, reportedShape, body, -1);
+		this.reportIntersection(worldNormal, hitPointWorld, reportedShape, body, -1);
 	}
 
 	/**
@@ -435,7 +469,7 @@ public class Ray {
 				: null;
 
 		// Checking faces
-		List<int[]> faces = shape.faces;
+		List<Face> faces = shape.faces;
 
 		List<Vec3> vertices = shape.vertices;
 		List<Vec3> normals = shape.faceNormals;
@@ -452,7 +486,7 @@ public class Ray {
 		for (int j = 0; !result.shouldStop && j < Nfaces; j++) {
 			int fi = (faceList != null) ? faceList.get(j) : j;
 
-			int[] face = faces.get(fi);
+			int[] face = faces.get(fi).vertices;
 			Vec3 faceNormal = normals.get(fi);
 			Quaternion q = quat;
 			Vec3 x = position;
@@ -599,7 +633,6 @@ public class Ray {
 			intersectPoint.vadd(localFrom, intersectPoint);
 
 			// Get triangle vertices
-
 			Vec3 b = new Vec3();
 			Vec3 c = new Vec3();
 			mesh.getVertex(indices[trianglesIndex * 3 + 1], b);
@@ -620,47 +653,47 @@ public class Ray {
 		triangles.clear();
 	}
 
-	private  Vec3 intersectPoint = new Vec3();
+	private static Vec3 intersectPoint = new Vec3();
 	protected  static Vec3 v0 = new Vec3();
 	protected  static Vec3 v1 = new Vec3();
 	protected  static Vec3 v2 = new Vec3();
 
-	private  Vec3 intersectConvex_minDistNormal = new Vec3();
-	private  Vec3 intersectConvex_normal = new Vec3();
-	private  Vec3 intersectConvex_vector = new Vec3();
-	private  Vec3 intersectConvex_minDistIntersect = new Vec3();
+	private static Vec3 intersectConvex_minDistNormal = new Vec3();
+	private static Vec3 intersectConvex_normal = new Vec3();
+	private static Vec3 intersectConvex_vector = new Vec3();
+	private static Vec3 intersectConvex_minDistIntersect = new Vec3();
 
-	private  Vec3 intersectTrimesh_normal = new Vec3();
-	private  List<Integer> intersectTrimesh_triangles = new ArrayList<>();
-	private  Transform intersectTrimesh_treeTransform = new Transform();
-	private  Vec3 intersectTrimesh_localDirection = new Vec3();
-	private  Vec3 intersectTrimesh_localFrom = new Vec3();
-	private  Vec3 intersectTrimesh_localTo = new Vec3();
-	private  Vec3 intersectTrimesh_worldIntersectPoint = new Vec3();
-	private  Vec3 intersectTrimesh_worldNormal = new Vec3();
+	private static Vec3 intersectTrimesh_normal = new Vec3();
+	private static List<Integer> intersectTrimesh_triangles = new ArrayList<>();
+	private static Transform intersectTrimesh_treeTransform = new Transform();
+	private static Vec3 intersectTrimesh_localDirection = new Vec3();
+	private static Vec3 intersectTrimesh_localFrom = new Vec3();
+	private static Vec3 intersectTrimesh_localTo = new Vec3();
+	private static Vec3 intersectTrimesh_worldIntersectPoint = new Vec3();
+	private static Vec3 intersectTrimesh_worldNormal = new Vec3();
 	//private final AABB intersectTrimesh_localAABB = new AABB();
 
-	private  Vec3 intersectBody_xi = new Vec3();
-	private  Quaternion intersectBody_qi = new Quaternion();
+	private static Vec3 intersectBody_xi = new Vec3();
+	private static Quaternion intersectBody_qi = new Quaternion();
 
-	private  Vec3 a = new Vec3();
-	private  Vec3 b = new Vec3();
-	private  Vec3 c = new Vec3();
+	private static Vec3 a = new Vec3();
+	private static Vec3 b = new Vec3();
+	private static Vec3 c = new Vec3();
 	//private final Vec3 d = new Vec3();
 
 	//private final RaycastResult tmpRaycastResult = new RaycastResult();
 
-	private  Map<String, Object> intersectConvexOptions = new HashMap<>();
-	private  Vec3 worldPillarOffset = new Vec3();
-	private  Ray intersectHeightfield_localRay = new Ray();
-	private  int[] intersectHeightfield_index = new int[2];
+	private static Map<String, Object> intersectConvexOptions = new HashMap<>();
+	private static Vec3 worldPillarOffset = new Vec3();
+	private static Ray intersectHeightfield_localRay = new Ray();
+	private static int[] intersectHeightfield_index = new int[2];
 	//private final List<Integer> intersectHeightfield_minMax = new ArrayList<>();
 
-	private  Vec3 Ray_intersectSphere_intersectionPoint = new Vec3();
-	private  Vec3 Ray_intersectSphere_normal = new Vec3();
+	private static Vec3 Ray_intersectSphere_intersectionPoint = new Vec3();
+	private static Vec3 Ray_intersectSphere_normal = new Vec3();
 
-	private  AABB tmpAABB = new AABB();
-	private  List<Body> tmpArray = new ArrayList<>();
+	private static AABB tmpAABB = new AABB();
+	private static List<Body> tmpArray = new ArrayList<>();
 
 	/**
 	 * @return True if the intersections should continue
@@ -682,7 +715,7 @@ public class Ray {
 			hasHit = true;
 			result.set(from, to, normal, hitPointWorld, shape, body, distance);
 			result.hasHit = true;
-			callback.onRaycast(result);
+			if(callback!=null)callback.onRaycast(result);
 			break;
 
 		case CLOSEST:

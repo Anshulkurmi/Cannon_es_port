@@ -32,7 +32,7 @@ public class ConvexPolyhedron extends Shape {
     /**
      * Array of integer arrays, indicating which vertices each face consists of
      */
-    public List<int[]> faces;
+    public List<Face> faces;
     public List<Vec3> faceNormals;
     public List<Vec3> worldVertices;
     public boolean worldVerticesNeedsUpdate;
@@ -48,7 +48,7 @@ public class ConvexPolyhedron extends Shape {
     public ConvexPolyhedron() {
         super(ShapeTypes.CONVEXPOLYHEDRON);// Shape.types to Shape
         vertices = new ArrayList<>();
-        faces = new ArrayList<>();
+        faces = new ArrayList<Face>();
         faceNormals = new ArrayList<>();
         worldVertices = new ArrayList<>();
         worldVerticesNeedsUpdate = true;
@@ -64,12 +64,14 @@ public class ConvexPolyhedron extends Shape {
      * @param faces    Array of integer arrays, describing which vertices that is
      *                 included in each face.
      */
-    public ConvexPolyhedron(List<Vec3> vertices, List<int[]> faces, List<Vec3> normals, List<Vec3> axes,double boundingSphereRadius) {
+    public ConvexPolyhedron(List<Vec3> vertices, List<Face> faces, List<Vec3> normals, List<Vec3> axes,double boundingSphereRadius) {
         super(ShapeTypes.CONVEXPOLYHEDRON);// Shape.types to Shape
         this.vertices = vertices;
         this.faces = faces;
         this.faceNormals = normals;
-
+        
+        //System.out.println(normals) ;
+        
         if (this.faceNormals.isEmpty()) {
             computeNormals();
         }
@@ -93,19 +95,19 @@ public class ConvexPolyhedron extends Shape {
      * Computes uniqueEdges
      */
     public void computeEdges() {
-        List<int[]> faces = this.faces;
+        List<Face> faces = this.faces;
         List<Vec3> vertices = this.vertices;
         List<Vec3> edges = uniqueEdges;
         edges.clear();
         Vec3 edge = new Vec3();
 
         for (int i = 0; i < faces.size(); i++) {
-            int[] face = faces.get(i);
-            int numVertices = face.length;
+            Face face = faces.get(i);
+            int numVertices = face.vertices.length;
 
             for (int j = 0; j < numVertices; j++) {
                 int k = (j + 1) % numVertices;
-                vertices.get(face[j]).vsub(vertices.get(face[k]), edge);
+                vertices.get(face.vertices[j]).vsub(vertices.get(face.vertices[k]), edge);
                 edge.normalize();
                 boolean found = false;
 
@@ -128,30 +130,34 @@ public class ConvexPolyhedron extends Shape {
      * Will reuse existing Vec3 objects in the `faceNormals` array if they exist.
      */
     public void computeNormals() {
-        faceNormals.clear();
+        //faceNormals.clear();
+        this.faceNormals = new ArrayList<Vec3>(this.faces.size()) ;
 
         // Generate normals
         for (int i = 0; i < faces.size(); i++) {
             // added
-            for (int j = 0; j < this.faces.get(i).length; j++) {
-                if (this.vertices.get(this.faces.get(i)[j]) != null)
-                    System.err.println("Vertex" + this.faces.get(i)[j] + "not found!");
+            for (int j = 0; j < this.faces.get(i).vertices.length; j++) {
+                if (this.vertices.get(this.faces.get(i).vertices[j]) == null)
+                    System.err.println("Vertex " + this.faces.get(i).vertices[j] + "not found!");
             }
 
-            int[] face = faces.get(i);
-            int numVertices = face.length;
+            Face face = faces.get(i);
+            int numVertices = face.vertices.length;
             Vec3 n = faceNormals.size() > i ? faceNormals.get(i) : new Vec3();
-            getFaceNormal(i, n);
+            this.getFaceNormal(i, n);
             n.negate(n);
-            faceNormals.set(i, n);
-            Vec3 vertex = vertices.get(face[0]);
+            
+            //System.out.println(n + " " + i+ vertices);
+            
+            this.faceNormals.add(n);
+            Vec3 vertex = vertices.get(face.vertices[0]);
 
             if (n.dot(vertex) < 0) {
                 System.err.println(".faceNormals[" + i + "] = Vec3(" + n.toString()
                         + ") looks like it points into the shape? The vertices follow. Make sure they are ordered CCW around the normal, using the right hand rule.");
 
                 for (int j = 0; j < numVertices; j++) {
-                    System.out.println(".vertices[" + face[j] + "] = Vec3(" + vertices.get(face[j]).toString() + ")");
+                    System.out.println(".vertices[" + face.vertices[j] + "] = Vec3(" + vertices.get(face.vertices[j]).toString() + ")");
                 }
             }
         }
@@ -161,10 +167,10 @@ public class ConvexPolyhedron extends Shape {
      * Compute the normal of a face from its vertices
      */
     public void getFaceNormal(int i, Vec3 target) {
-        int[] f = faces.get(i);
-        Vec3 va = vertices.get(f[0]);
-        Vec3 vb = vertices.get(f[1]);
-        Vec3 vc = vertices.get(f[2]);
+        Face f = faces.get(i);
+        Vec3 va = vertices.get(f.vertices[0]);
+        Vec3 vb = vertices.get(f.vertices[1]);
+        Vec3 vc = vertices.get(f.vertices[2]);
         ConvexPolyhedron.computeNormal(va, vb, vc, target);
     }
 
@@ -207,8 +213,8 @@ public class ConvexPolyhedron extends Shape {
 
         List<Vec3> worldVertsB1 = new ArrayList<Vec3>();
 
-        for (int i = 0; i < hullB.faces.get(closestFaceB).length; i++) {
-            Vec3 b = hullB.vertices.get(hullB.faces.get(closestFaceB)[i]);
+        for (int i = 0; i < hullB.faces.get(closestFaceB).vertices.length; i++) {
+            Vec3 b = hullB.vertices.get(hullB.faces.get(closestFaceB).vertices[i]);
             Vec3 worldb = b;
             quatB.vmult(worldb, worldb);
             posB.vadd(worldb, worldb);
@@ -304,7 +310,7 @@ public class ConvexPolyhedron extends Shape {
                 quatA.vmult(faceANormalWS3, faceANormalWS3);
 
                 double d = hullA.testSepAxis(faceANormalWS3, hullB, posA, quatA, posB, quatB);
-                if (d == false) {
+                if (d<0) {
                     return false;
                 }
 
@@ -320,7 +326,7 @@ public class ConvexPolyhedron extends Shape {
                 quatA.vmult(hullA.uniqueAxes.get(i), faceANormalWS3);
 
                 double d = hullA.testSepAxis(faceANormalWS3, hullB, posA, quatA, posB, quatB);
-                if (d == false) {
+                if (d<0) {
                     return false;
                 }
 
@@ -341,7 +347,7 @@ public class ConvexPolyhedron extends Shape {
                 quatB.vmult(Worldnormal1, Worldnormal1);
                 curPlaneTests++;
                 double d = hullA.testSepAxis(Worldnormal1, hullB, posA, quatA, posB, quatB);
-                if (d == false) {
+                if (d<0) {
                     return false;
                 }
 
@@ -357,7 +363,7 @@ public class ConvexPolyhedron extends Shape {
 
                 curPlaneTests++;
                 double d = hullA.testSepAxis(Worldnormal1, hullB, posA, quatA, posB, quatB);
-                if (d == false) {
+                if (d<0) {
                     return false;
                 }
 
@@ -381,7 +387,7 @@ public class ConvexPolyhedron extends Shape {
                 if (!Cross.almostZero()) {
                     Cross.normalize();
                     double dist = hullA.testSepAxis(Cross, hullB, posA, quatA, posB, quatB);
-                    if (dist == false) {
+                    if (dist<0) {
                         return false;
                     }
                     if (dist < dmin) {
@@ -426,7 +432,8 @@ public class ConvexPolyhedron extends Shape {
         return depth;
     }
 
-    public void calculateLocalInertia(double mass, Vec3 target) {
+    @Override
+    public Vec3 calculateLocalInertia(double mass, Vec3 target) {
         // Approximate with box inertia
         // Exact inertia calculation is overkill, but see
         // http://geometrictools.com/Documentation/PolyhedralMassProperties.pdf for the
@@ -441,16 +448,16 @@ public class ConvexPolyhedron extends Shape {
         target.y = (1.0 / 12.0) * mass * (2 * x * 2 * x + 2 * z * 2 * z);
         target.z = (1.0 / 12.0) * mass * (2 * y * 2 * y + 2 * x * 2 * x);
 
-        // return target ; //added return type Vec3 as per super implementation
+        return target ; //added return type Vec3 as per super implementation
     }
 
     /**
      * @param face_i Index of the face
      */
     public double getPlaneConstantOfFace(int face_i) {
-        int[] f = this.faces.get(face_i);
+       Face f = this.faces.get(face_i);
         Vec3 n = this.faceNormals.get(face_i);
-        Vec3 v = this.vertices.get(f[0]);
+        Vec3 v = this.vertices.get(f.vertices[0]);
         double c = -n.dot(v);
         return c;
     }
@@ -497,17 +504,17 @@ public class ConvexPolyhedron extends Shape {
         }
 
         // Get the face and construct connected faces
-        int[] polyA = hullA.faces.get(closestFaceA);
+        Face polyA = hullA.faces.get(closestFaceA);
         polyA.connectedFaces = new ArrayList<>();
         for (int i = 0; i < hullA.faces.size(); i++) {
-            for (int j = 0; j < hullA.faces.get(i).length; j++) {
+            for (int j = 0; j < hullA.faces.get(i).vertices.length; j++) {
                 if (
                 /* Sharing a vertex */
-                polyA.indexOf(hullA.faces.get(i)[j]) != -1 &&
+                polyA.indexOf(hullA.faces.get(i).vertices[j]) != -1 &&
                 /* Not the one we are looking for connections from */
                         i != closestFaceA &&
                         /* Not already added */
-                        polyA.connectedFaces.indexOf(i) == -1) {
+                    polyA.connectedFaces.indexOf(i) == -1) {
                     polyA.connectedFaces.add(i);
                 }
             }
@@ -515,10 +522,10 @@ public class ConvexPolyhedron extends Shape {
 
         // Clip the polygon to the back of the planes of all faces of hull A,
         // that are adjacent to the witness face
-        int numVerticesA = polyA.length;
+        int numVerticesA = polyA.vertices.length;
         for (int i = 0; i < numVerticesA; i++) {
-            Vec3 a = hullA.vertices.get(polyA[i]);
-            Vec3 b = hullA.vertices.get(polyA[(i + 1) % numVerticesA]);
+            Vec3 a = hullA.vertices.get(polyA.vertices[i]);
+            Vec3 b = hullA.vertices.get(polyA.vertices[(i + 1) % numVerticesA]);
             a.vsub(b, edge0);
             WorldEdge0.copy(edge0);
             quatA.vmult(WorldEdge0, WorldEdge0);
@@ -796,7 +803,7 @@ public class ConvexPolyhedron extends Shape {
     public int pointIsInside(Vec3 p) {
         List<Vec3> verts = this.vertices;
         // change List<Vec3> to List<int[]>
-        List<int[]> faces = this.faces;
+        List<Face> faces = this.faces;
         List<Vec3> normals = this.faceNormals;
         Integer positiveResult = null;
         Vec3 pointInside = new Vec3();
@@ -804,7 +811,7 @@ public class ConvexPolyhedron extends Shape {
 
         for (int i = 0; i < this.faces.size(); i++) {
             Vec3 n = normals.get(i);
-            Vec3 v = verts.get(faces.get(i)[0]); // We only need one point in the face
+            Vec3 v = verts.get(faces.get(i).vertices[0]); // We only need one point in the face
 
             // This dot product determines which side of the edge the point is
             Vec3 vToP = p.vsub(v);

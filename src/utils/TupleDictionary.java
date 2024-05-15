@@ -21,43 +21,43 @@ public class TupleDictionary {
      * get 
      */
     public Object get(int i, int j) {
-        String key = getKey(i, j);
-        return data.get(key);
+        String key = this.getKey(i, j);
+        return this.data.get(key);
     }
 
     /**
      * set
      */
     public void set(int i, int j, Object value) {
-        String key = getKey(i, j);
+        String key = this.getKey(i, j);
 
         // Check if key already exists
-        if (!data.containsKey(key)) {
+        if (!this.data.containsKey(key)) {
             keys.add(key);
         }
 
-        data.put(key, value);
+        this.data.put(key, value);
     }
 
     /**
      * delete
      */
     public void delete(int i, int j) {
-        String key = getKey(i, j);
-        if (keys.contains(key)) {
-            keys.remove(key);
+        String key = this.getKey(i, j);
+        if (this.keys.contains(key)) {
+            this.keys.remove(key);
         }
-        data.remove(key);
+        this.data.remove(key);
     }
 
     /**
      * reset
      */
     public void reset() {
-        for (String key : keys) {
-            data.remove(key);
+        for (String key : this.keys) {
+            this.data.remove(key);
         }
-        keys.clear();
+        this.keys.clear();
     }
 
     private String getKey(int i, int j) {

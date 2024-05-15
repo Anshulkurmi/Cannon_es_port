@@ -43,8 +43,8 @@ public class RaycastVehicle {
     // Method to add a wheel to the vehicle.
     public int addWheel(WheelInfoOptions options) {
         WheelInfo info = new WheelInfo(options);
-        int index = wheelInfos.size();
-        wheelInfos.add(info);
+        int index = this.wheelInfos.size();
+        this.wheelInfos.add(info);
         return index;
     }
 
@@ -55,20 +55,20 @@ public class RaycastVehicle {
 
     // Method to apply engine force to a wheel.
     public void applyEngineForce(double value, int wheelIndex) {
-        wheelInfos.get(wheelIndex).engineForce = value;
+        this.wheelInfos.get(wheelIndex).engineForce = value;
     }
 
     // Method to set the braking force of a wheel.
     public void setBrake(double brake, int wheelIndex) {
-        wheelInfos.get(wheelIndex).brake=brake;
+        this.wheelInfos.get(wheelIndex).brake=brake;
     }
 
     // Method to add the vehicle, including its constraints, to the physics world.
     public void addToWorld(World world) {
         world.addBody(chassisBody);
         this.world = world;
-        preStepCallback = () -> updateVehicle(world.getTimeStep());
-        world.addPreStepListener(preStepCallback);
+        preStepCallback = () -> updateVehicle(world.dt);
+        world.addEventListener("prestep",null);
     }
 
     // Method to get the world-oriented axis for the vehicle.
@@ -210,7 +210,7 @@ public class RaycastVehicle {
     public void removeFromWorld(World world) {
         List<Constraint> constraints = this.constraints;
         world.removeBody(this.chassisBody);
-        world.removeEventListener("preStep", this.preStepCallback);
+        world.removeEventListener("preStep", null) ; //this.preStepCallback);
         this.world = null;
     }
 
@@ -218,7 +218,7 @@ public class RaycastVehicle {
         Vec3 rayvector = castRay_rayvector;
         Vec3 target = castRay_target;
 
-        updateWheelTransformWorld(wheel);
+        this.updateWheelTransformWorld(wheel);
         Body chassisBody = this.chassisBody;
 
         double depth = -1;
@@ -241,7 +241,7 @@ public class RaycastVehicle {
         this.world.rayTest(source, target, raycastResult);
         chassisBody.collisionResponse = oldState;
 
-        RigidBody object = raycastResult.body;
+        Body object = raycastResult.body;
 
         wheel.raycastResult.groundObject = 0;
 
@@ -254,8 +254,8 @@ public class RaycastVehicle {
             wheel.suspensionLength = hitDistance - wheel.radius;
 
             // clamp on max suspension travel
-            double minSuspensionLength = wheel.suspensionRestLength - wheel.maxSuspensionTravel;
-            double maxSuspensionLength = wheel.suspensionRestLength + wheel.maxSuspensionTravel;
+            double minSuspensionLength = wheel.suspensionRestLength - wheel.maxSuspensionTravel ;
+            double maxSuspensionLength = wheel.suspensionRestLength + wheel.maxSuspensionTravel ;
             if (wheel.suspensionLength < minSuspensionLength) {
                 wheel.suspensionLength = minSuspensionLength;
             }
@@ -364,7 +364,7 @@ public class RaycastVehicle {
     
         for (int i = 0; i < numWheels; i++) {
             WheelInfo wheel = wheelInfos.get(i);
-            RigidBody groundObject = wheel.raycastResult.body;
+            Body groundObject = wheel.raycastResult.body;
     
             if (groundObject != null) {
                 this.numWheelsOnGround++;
@@ -382,7 +382,7 @@ public class RaycastVehicle {
     
         for (int i = 0; i < numWheels; i++) {
             WheelInfo wheel = wheelInfos.get(i);
-            RigidBody groundObject = wheel.raycastResult.body;
+            Body groundObject = wheel.raycastResult.body;
     
             if (groundObject != null) {
                 Vec3 axlei = axle[i];
@@ -418,7 +418,7 @@ public class RaycastVehicle {
         this.sliding = false;
         for (int i = 0; i < numWheels; i++) {
             WheelInfo wheel = wheelInfos.get(i);
-            RigidBody groundObject = wheel.raycastResult.body;
+            Body groundObject = wheel.raycastResult.body;
     
             double rollingFriction = 0;
     
@@ -442,7 +442,7 @@ public class RaycastVehicle {
             }
     
             wheel.forwardImpulse = 0;
-            wheel.skidInfo = 1;
+            wheel.skidInfo = 1; 
     
             if (groundObject != null) {
                 wheel.skidInfo = 1;
@@ -497,7 +497,7 @@ public class RaycastVehicle {
             }
     
             if (wheel.sideImpulse != 0) {
-                RigidBody groundObject = wheel.raycastResult.body;
+                Body groundObject = wheel.raycastResult.body;
     
                 Vec3 rel_pos2 = new Vec3();
                 wheel.raycastResult.hitPointWorld.vsub(groundObject.position, rel_pos2);
@@ -507,7 +507,18 @@ public class RaycastVehicle {
                 // Scale the relative position in the up direction with rollInfluence.
                 // If rollInfluence is 1, the impulse will be applied on the hitPoint (easy to roll over), if it is zero it will be applied in the same plane as the center of mass (not easy to roll over).
                 chassisBody.vectorToLocalFrame(rel_pos, rel_pos);
-                rel_pos.setComponent('xyz'.charAt(this.indexUpAxis), rel_pos.getComponent('xyz'.charAt(this.indexUpAxis)) * wheel.rollInfluence);
+                if(this.indexUpAxis == 0) {
+                	rel_pos.x *= wheel.rollInfluence ;
+                }
+                else if(this.indexUpAxis == 1) {
+                	rel_pos.y *= wheel.rollInfluence ;
+                }
+                else {
+                	rel_pos.z *= wheel.rollInfluence ;
+                }
+                
+                //rel_pos.set("xyz".charAt(this.indexUpAxis), rel_pos.get("xyz".charAt(this.indexUpAxis)) * wheel.rollInfluence);
+                
                 chassisBody.vectorToWorldFrame(rel_pos, rel_pos);
                 chassisBody.applyImpulse(sideImp, rel_pos);
     
@@ -539,12 +550,12 @@ public class RaycastVehicle {
     };
 
     private Vec3 updateFriction_surfNormalWS_scaled_proj = new Vec3();
-    private Vec3[] updateFriction_axle = new Vec3[/* number of elements */];
-    private Vec3[] updateFriction_forwardWS = new Vec3[/* number of elements */];
+    private List<Vec3> updateFriction_axle = new ArrayList<Vec3>() ; 
+    private List<Vec3> updateFriction_forwardWS = new ArrayList<>() ; 
     private double sideFrictionStiffness2 = 1;
 
-    private Vec3 calcRollingFriction_vel1 = new Vec3();
-    private Vec3 calcRollingFriction_vel2 = new Vec3();
+    private  Vec3 calcRollingFriction_vel1 = new Vec3();
+    private  Vec3 calcRollingFriction_vel2 = new Vec3();
     private Vec3 calcRollingFriction_vel = new Vec3();
 
     /**
@@ -615,7 +626,7 @@ public class RaycastVehicle {
 
         pos.vsub(body.position, r0);
         r0.cross(normal, c0);
-        body.invInertiaWorld.vmul(c0, m);
+        body.invInertiaWorld.vmult(c0, m);
         m.cross(r0, vec);
 
         return body.invMass + normal.dot(vec);

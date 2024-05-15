@@ -80,7 +80,7 @@
 //     }
 // }
 
-package utils;
+package events;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -125,42 +125,21 @@ public class EventTarget {
 
     public void dispatchEvent(Event event) {
         String type = event.getType();
-        EventTarget target = event.getTarget();
-
         // Check if the target has event listeners for the specified type
-        if (target.listeners.containsKey(type)) {
-            List<EventListener> typeListeners = target.listeners.get(type);
+        if (this.listeners.containsKey(type)) {
+        	event.target=this;
+            List<EventListener> typeListeners = this.listeners.get(type);
             for (EventListener listener : typeListeners) {
                 // Invoke the event listener's handleEvent method
                 listener.handleEvent(event);
 
                 // Propagate the event to the parent if it is an instance of EventTarget
-                if (target instanceof EventTarget) {
-                    ((EventTarget) target).dispatchEvent(event);
-                }
+                //    ((EventTarget) target).dispatchEvent(event);
             }
         }
     }
 
-    public interface EventListener {
-        void handleEvent(Event event);
-    }
+  
 }
 
-class Event {
-    private final String type;
-    private final EventTarget target;
 
-    public Event(String type, EventTarget target) {
-        this.type = type;
-        this.target = target;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public EventTarget getTarget() {
-        return target;
-    }
-}

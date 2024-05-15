@@ -1,9 +1,14 @@
 package math;
 
-import java.util.Random;
 
 public class Vec3 {
-    public double x, y, z;
+    private static final Vec3 Vec3_tangents_n = new Vec3();
+
+	private static final Vec3 Vec3_tangents_randVec = new Vec3();
+
+	private static final Vec3 antip_neg = new Vec3();
+
+	public double x, y, z;
 
     //added
     public static Vec3 ZERO = new Vec3(0,0,0);
@@ -62,7 +67,11 @@ public class Vec3 {
         this.y = 0;
         this.z = 0;
     }
-
+    /**
+     * 
+     * @param v
+     * @return returns new Vector adding this vector with vector v 
+     */
     public Vec3 vadd(Vec3 v) {
         return new Vec3(
             this.x + v.x,
@@ -85,7 +94,11 @@ public class Vec3 {
         return target ;
     }
 
-
+    /**
+     * 
+     * @param v
+     * @return returns new Vector subtracting vector v from this vector 
+     */
     public Vec3 vsub(Vec3 v) {
         return new Vec3(
             this.x - v.x,
@@ -97,7 +110,7 @@ public class Vec3 {
     /**
    * Vector subtraction
    * @param v : vector to subtract
-   * @param target Optional target to save in.
+   * @param target : Contains the resulting vector after subtracting vector v from this vector  
    */
     public void vsub(Vec3 v, Vec3 target ) {
     	target.x =  this.x - v.x ;
@@ -120,17 +133,22 @@ public class Vec3 {
    * @return Returns the norm of the vector
    */
     public double normalize() {
-        double length = Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
-        if (length > 0) {
+    	double x = this.x ;
+    	double y = this.y;
+    	double z = this.z ;
+        double length =  Math.sqrt(x*x + y*y + z*z);
+        if (length > 0.0) {
             double invLength = 1.0 / length;
             this.x *= invLength;
             this.y *= invLength;
             this.z *= invLength;
-            return length;
         } else {
             // Cannot normalize a zero vector
-            return -1;
+        	this.x = 0;
+        	this.y = 0;
+        	this.z = 0;
         }
+        return length;
     }
     
    //default unit() method without target vector 
@@ -139,7 +157,7 @@ public class Vec3 {
     }
      /**
    * Get the version of this vector that is of length 1.
-   * @param target Optional target to save in
+   * @param target: Optional target to save in
    * @return Returns the unit vector
    */
     public Vec3 unit(Vec3 target) {
@@ -152,14 +170,17 @@ public class Vec3 {
    * Get the length of the vector
    */
     public double length() {
-        return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+    	double x = this.x ;
+    	double y = this.y;
+    	double z = this.z ;
+        return Math.sqrt(x*x + y*y + z*z);
     }
 
     /**
    * Get the squared length of the vector.
    */
     public double lengthSquared() {
-        return this.x * this.x + this.y * this.y + this.z * this.z;
+    	return this.dot(this);
     }
 
     /**
@@ -186,6 +207,7 @@ public class Vec3 {
     public Vec3 scale(double scalar) {
     	return scale(scalar , new Vec3() );
     }
+    
     /**
    * Multiply all the components of the vector with a scalar.
    * @param target The vector to save the result in.
@@ -248,7 +270,9 @@ public class Vec3 {
         return this.x == 0 && this.y == 0 && this.z == 0;
     }
 
-    
+    /**
+     * @return new vector opposite to this vector
+     */
     public Vec3 negate() {
     	return negate(new Vec3());
     }
@@ -269,15 +293,29 @@ public class Vec3 {
    * @param t2 Vector object to save the second tangent in
    */
     public void tangents(Vec3 t1, Vec3 t2) {
-        double norm = this.normalize();
-        if (norm == -1) {
+        double norm = this.length();
+        if (norm > 0.0){
             // Cannot compute tangents for a zero vector
-            return;
+        	Vec3 n = Vec3_tangents_n;
+        	double inorm = 1/norm ;
+        	n.set(this.x * inorm, this.y * inorm, this.z * inorm);
+        	Vec3 randVec = Vec3_tangents_randVec ;
+        	
+        	if(Math.abs(n.x) < 0.9) {
+        		randVec.set(1, 0, 0);
+        		n.cross(randVec , t1);
+        	}
+        	else {
+        		randVec.set(0, 1, 0);
+        		n.cross(randVec,t1);	
+        	}
+        	n.cross(t1,t2);
         }
-        Random rand = new Random();
-        Vec3 randVec = new Vec3(rand.nextDouble(), rand.nextDouble(), rand.nextDouble());
-        t1.copy(randVec.cross(this));
-        t2.copy(this.cross(t1));
+        else {
+        	// The normal length is zero, make something up
+        	t1.set(1,0,0);
+        	t2.set(0, 1, 0);
+        }
     }
 
     /**
@@ -298,12 +336,14 @@ public class Vec3 {
     /**
    * Copies value of source to this vector.
    */
-    public void copy(Vec3 v) {
+    public Vec3 copy(Vec3 v) {
         this.x = v.x;
         this.y = v.y;
         this.z = v.z;
+        return this ;
     }
     
+    // default lerp method
     public void lerp(Vec3 v, double alpha) {
     	lerp (v , alpha , new Vec3());
     }
@@ -334,8 +374,11 @@ public class Vec3 {
             Math.abs(this.z - v.z) < precision
         );
     }
-
     
+    /**
+     * Returns true if this vector has components of magnitude less than {#default_precision}
+     * @return
+     */
     public boolean almostZero() {
     	return almostZero(default_precision);
     }
@@ -358,11 +401,12 @@ public class Vec3 {
    * @param precision Set to zero for exact comparisons
    */
     public boolean isAntiparallelTo(Vec3 v, double precision) {
-        return this.dot(v) < -1 + precision;
+        this.negate(antip_neg);
+        return antip_neg.almostEquals(v,precision);
     }
 
     /**
-   * Clone the vector
+   * Clone the vector and returns new vector as copy of this vector
    */
     public Vec3 clone() {
         return new Vec3(this.x, this.y, this.z);

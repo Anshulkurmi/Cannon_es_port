@@ -6,7 +6,7 @@ import math.Vec3;
  * A spring, connecting two bodies.
  * 
  * @example
- *          const spring = new Spring(boxBody, sphereBody, {
+ *          Spring spring = new Spring(boxBody, sphereBody, {
  *          restLength: 0,
  *          stiffness: 50,
  *          damping: 1,

@@ -4,35 +4,35 @@ import math.Vec3;
 
 
 public class RayOptions {
-    private Vec3 from;
-    private Vec3 to;
-    private RayModes mode;
-    private RaycastResult result;
+    Vec3 from;
+     Vec3 to;
+    RayModes mode;
+     RaycastResult result;
     /**
    * If set to `true`, the ray skips any hits with normal.dot(rayDirection) < 0.
    * @default false
    */
-    private boolean skipBackfaces;
+    boolean skipBackfaces;
     /**
    * collisionFilterMask
    * @default -1
    */
-    private int collisionFilterMask;
+     int collisionFilterMask;
     /**
    * collisionFilterGroup
    * @default -1
    */
-    private int collisionFilterGroup;
+     int collisionFilterGroup;
     /**
    * Set to `false` if you don't want the Ray to take `collisionResponse` flags into account on bodies and shapes.
    * @default true
    */
-    private boolean checkCollisionResponse;
+     boolean checkCollisionResponse;
 
     /**
    * callback
    */
-    private RaycastCallback callback;
+     RaycastCallback callback;
 
     public RayOptions() {
         // Default values
